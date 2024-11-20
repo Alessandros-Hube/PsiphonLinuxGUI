@@ -1,0 +1,48 @@
+{
+  "name": "psiphonlinuxgui",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "repository": "https://github.com/Alessandros-Hube/PsiphonLinuxGUI",
+  "keywords": [
+    "psiphon",
+    "VPN"
+  ],
+  "author": {
+    "name": "Alessandro Abbenante",
+    "email": "alessandros.hube@gmail.com"
+  },
+  "license": "MIT",
+  "description": "PsiphonLinuxGUI is an unofficial Linux app for managing the Psiphon proxy server and browser settings.",
+  "devDependencies": {
+    "electron": "^30.0.9",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "asar": false,
+    "appId": "com.Alessandros-Hube.psiphonlinuxgui",
+    "linux": {
+      "target": [
+        "deb",
+        "rpm"
+      ],
+      "category": "Utility",
+      "icon": "./images/psiphonlinuxgui.png",
+      "executableName": "psiphonlinuxgui",
+      "desktop": {
+        "Name": "Psiphon Proxy Server",
+        "Icon": "/opt/psiphonlinuxgui/resources/app/images/psiphonlinuxgui.png",
+        "Encoding": "UTF-8"
+      }
+    },
+    "deb": {
+      "afterInstall": "./after-install.sh"
+    },
+    "rpm": {
+      "afterInstall": "./after-install.sh"
+    }
+  }
+}

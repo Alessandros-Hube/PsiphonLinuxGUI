@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css" />
+    <title>Psiphon Proxy Server</title>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="./images/psiphonlinuxgui.png" alt="Psiphon Logo">
+        </div>
+
+        <div class="sidebar">
+            <div>
+                <p>To use the proxy server, update your browser's proxy settings. For HTTP/HTTPS, enter 127.0.0.1:8081,
+                    and for SOCKS 4/5, use 127.0.0.1:1081. Verify the change at <a href="https://whatismyipaddress.com"
+                        target="_blank">WhatIsMyIPAddress</a> or <a href="https://browserleaks.com/ip"
+                        target="_blank">BrowserLeaks</a> to ensure
+                    your IP has changed.
+                    <br><br>
+                    Alternatively, you can adjust proxy settings via this application. <br>
+                    <span style="color:red;">Attention:</span> The browser will restart
+                    every time the proxy server is started or stopped.
+                </p>
+            </div>
+            <div class="toggle-container">
+                <span class="fab fa-firefox"></span>
+                <div class="toggle-text">Firefox:</div>
+                <label class="switch">
+                    <input type="checkbox" id="firefox-checkbox">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-container">
+                <span class="fab fa-chrome"></span>
+                <div class="toggle-text">Google Chrome:</div>
+                <label class="switch">
+                    <input type="checkbox" id="chrome-checkbox">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-container">
+                <span class="fab fa-opera"></span>
+                <div class="toggle-text">Opera:</div>
+                <label class="switch">
+                    <input type="checkbox" id="opera-checkbox">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-container">
+                <span class="fab fa-brave">
+                    <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/master/icons/brave.svg"
+                        alt="Brave" style="width: 16px; height: 16px;">
+                </span>
+                <div class="toggle-text">Brave:</div>
+                <label class="switch">
+                    <input type="checkbox" id="brave-checkbox">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-container">
+                <span class="fab fa-edge"></span>
+                <div class="toggle-text">Microsoft Edge:</div>
+                <label class="switch">
+                    <input type="checkbox" id="edge-checkbox">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+
+        <div class="status">
+            <img id="currentStateIcon" style="width: 37vh; height: 37vh;">
+            <h1>PSIPHON PROXY SERVER IS <span id="currentState">Idle</span></h1>
+            <button class="disconnect-btn" id="nextStateButton"><span id="Button">CONNECT</span></button>
+        </div>
+
+        <div class="footer">
+            <label for="country">Connect via:</label>
+
+            <div class="custom-select-wrapper" id="countrySelectWrapper">
+
+                <div class="custom-options" id="customOptions">
+                    <div data-value=""><span class="fi fa-solid fa-rocket"></span> Fastest Country</div>
+                    <div data-value="AT"><span class="fi fi-at"></span> Austria</div>
+                    <div data-value="AU"><span class="fi fi-au"></span> Australia</div>
+                    <div data-value="BE"><span class="fi fi-be"></span> Belgium</div>
+                    <div data-value="BG"><span class="fi fi-bg"></span> Bulgaria</div>
+                    <div data-value="BR"><span class="fi fi-br"></span> Brazil</div>
+                    <div data-value="CA"><span class="fi fi-ca"></span> Canada</div>
+                    <div data-value="CH"><span class="fi fi-ch"></span> Switzerland</div>
+                    <div data-value="CZ"><span class="fi fi-cz"></span> Czech Republic</div>
+                    <div data-value="DE"><span class="fi fi-de"></span> Germany</div>
+                    <div data-value="DK"><span class="fi fi-dk"></span> Denmark</div>
+                    <div style="display: none;" data-value="EE"><span class="fi fi-ee"></span> Estonia</div>
+                    <div data-value="ES"><span class="fi fi-es"></span> Spain</div>
+                    <div style="display: none;" data-value="FI"><span class="fi fi-fi"></span> Finland</div>
+                    <div data-value="FR"><span class="fi fi-fr"></span> France</div>
+                    <div data-value="GB"><span class="fi fi-gb"></span> United Kingdom</div>
+                    <div data-value="HU"><span class="fi fi-hu"></span> Hungary</div>
+                    <div data-value="IE"><span class="fi fi-ie"></span> Ireland</div>
+                    <div data-value="IN"><span class="fi fi-in"></span> India</div>
+                    <div data-value="IT"><span class="fi fi-it"></span> Italy</div>
+                    <div data-value="JP"><span class="fi fi-jp"></span> Japan</div>
+                    <div style="display: none;" data-value="LV"><span class="fi fi-lv"></span> Latvia</div>
+                    <div data-value="NL"><span class="fi fi-nl"></span> Netherlands</div>
+                    <div data-value="NO"><span class="fi fi-no"></span> Norway</div>
+                    <div data-value="PL"><span class="fi fi-pl"></span> Poland</div>
+                    <div data-value="RO"><span class="fi fi-ro"></span> Romania</div>
+                    <div data-value="RS"><span class="fi fi-rs"></span> Serbia</div>
+                    <div data-value="SE"><span class="fi fi-se"></span> Sweden</div>
+                    <div data-value="SG"><span class="fi fi-sg"></span> Singapore</div>
+                    <div data-value="SK"><span class="fi fi-sk"></span> Slovakia</div>
+                    <div style="display: none;" data-value="UA"><span class="fi fi-ua"></span> Ukraine</div>
+                    <div data-value="US"><span class="fi fi-us"></span> United States</div>
+                </div>
+                <div class="custom-select" id="customSelect" data-value="">
+                    <span class="fi fa-solid fa-rocket"></span> Fastest Country
+                    <button id="toggleButton"><i class="fa-solid fa-caret-down"></i></button>
+                    <!-- Dropdown toggle button -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('customSelect').addEventListener('click', function () {
+            this.parentNode.classList.toggle('open');
+        });
+
+        // Handle option selection
+        document.querySelectorAll('#customOptions div').forEach(function (option) {
+            option.addEventListener('click', function () {
+                var value = this.getAttribute('data-value');
+                var icon = this.querySelector('i, .fi').className;
+                var text = this.textContent.trim();
+
+                document.getElementById('customSelect').innerHTML = '<span class="' + icon + '"></span> ' + text + ' <button id="toggleButton"><i class="fa-solid fa-caret-down"></i></button>';
+                document.getElementById('customSelect').setAttribute('data-value', value);
+
+                document.getElementById('countrySelectWrapper').classList.remove('open');
+            });
+        });
+
+        // Close the dropdown when clicking outside of it
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.custom-select-wrapper')) {
+                document.getElementById('countrySelectWrapper').classList.remove('open');
+            }
+        });
+    </script>
+    <script src="renderer.js"></script>
+</body>
+
+</html>
