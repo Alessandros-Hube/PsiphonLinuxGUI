@@ -99,6 +99,12 @@ ipcRenderer.on('proxy-setting-error', (event, changeProxySetting) => {
     alert(`${changeProxySetting} is not installed`);
 });
 
+// Listener for handling server errors
+ipcRenderer.on('server-error', (event, err) => {
+    nextState();
+    alert(`Failed to execute psiphon-tunnel-core-x86_64. The file is not executable. ${err.toString()}`);
+});
+
 // Function to change the country setting and reset the state if needed
 function changeCountry() {
     if (currentStateIndex == 2) {
