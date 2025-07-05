@@ -3,6 +3,7 @@ body {
     background-color: #f0f0f0;
     margin: 0;
     padding: 0;
+    font-size: xx-large;
 }
 
 .container {
@@ -17,6 +18,11 @@ body {
     padding: 1.5vh;
     background-color: #004A8E;
     color: #fff;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
 }
 
 .header img {
@@ -25,11 +31,14 @@ body {
 
 .status {
     text-align: center;
-    padding: 20px;
+    padding: 2vh;
+    padding-top: 18vh;
     padding-bottom: 0;
-    height: 65.5vh;
-    margin-left: 30%;
-    padding-top: 80px;
+    height: 80vh;
+    width: -webkit-fill-available;
+    margin-left: 55vh;
+    background-color: white;
+    position: fixed;
 }
 
 .status h1 {
@@ -44,7 +53,7 @@ body {
     color: white;
     border: none;
     border-radius: 5px;
-    font-size: 16px;
+    font-size: xx-large;
     cursor: pointer;
 }
 
@@ -54,34 +63,39 @@ body {
 
 .sidebar {
     float: left;
-    width: 25%;
+    width: 29%;
     background-color: #f7f7f7;
     padding: 20px;
-    height: 80.5vh;
+    padding-bottom: 10vh;
+    margin-top: 7vh;
+    position: absolute;
+    z-index: 1;
 }
+
 
 .footer {
     text-align: center;
-    padding: 4.8vh 2vh 4.8vh 36.5vh;
+    padding: 4.5vh 11vh 4.5vh 0vh;
     background-color: #f7f7f7;
+    margin-left: 55vh;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
 }
 
 .footer select {
     padding: 10px;
-    font-size: 16px;
 }
-
-
 
 
 .custom-select-wrapper {
     position: relative;
     display: inline-block;
-    width: 250px;
+    width: 30%;
     border: 1px solid #ddd;
-    /* Border for the entire dropdown wrapper */
     border-radius: 4px;
-    /* Rounded corners */
 }
 
 .custom-select {
@@ -89,14 +103,10 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 10px;
-    font-size: 16px;
     cursor: pointer;
     background-color: #fff;
-    /* Background color */
     border: none;
-    /* Remove default border */
     border-radius: 4px;
-    /* Rounded corners */
 }
 
 .custom-select button {
@@ -105,7 +115,6 @@ body {
     font-size: 16px;
     cursor: pointer;
     color: #007bff;
-    /* Button color */
 }
 
 .custom-options {
@@ -115,13 +124,10 @@ body {
     border: 1px solid #ddd;
     width: 100%;
     max-height: 188px;
-    /* Adjust the height as needed */
     overflow-y: auto;
-    /* Enables vertical scrolling */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     z-index: 1;
     border-radius: 4px;
-    /* Rounded corners */
     margin-top: -115px;
 }
 
@@ -150,15 +156,19 @@ body {
     align-items: center;
     font-family: Arial, sans-serif;
     float: left;
-    margin: 5%;
+    margin: 4%;
     margin-right: 2%;
     width: -webkit-fill-available;
     height: 5vh;
 }
 
+.brave-icon {
+    width: 24px;
+    height: 24px;
+}
+
 .toggle-text {
     margin: 10px;
-    font-size: 16px;
     width: 53%;
 }
 
@@ -205,4 +215,139 @@ input:checked+.slider {
 
 input:checked+.slider:before {
     transform: translateX(25px);
+}
+
+@media (max-width: 1920px) {
+    body {
+        font-size: x-large;
+    }
+
+    .brave-icon {
+        width: x-large;
+        height: x-large;
+    }
+
+    .disconnect-btn {
+        font-size: x-large;
+    }
+
+    .sidebar {
+        margin-top: 8vh;
+        padding-bottom: 11vh;
+        width: 25%;
+        position: absolute;
+    }
+
+    .status {
+        margin-left: 49vh
+    }
+
+    .footer {
+        margin-left: 49vh
+    }
+}
+
+@media (max-width: 1440px) {
+    body {
+        font-size: 20px;
+    }
+
+    .brave-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .disconnect-btn {
+        font-size: 20px;
+    }
+
+    .status {
+        margin-left: 44vh
+    }
+
+    .footer {
+        margin-left: 44vh
+    }
+
+    .sidebar {
+        height: -webkit-fill-available;
+        position: fixed;
+        width: 25%;
+    }
+}
+
+@media (max-width: 1280px) {
+    body {
+        font-size: 18px;
+    }
+
+    .disconnect-btn {
+        font-size: 18px;
+    }
+
+    .brave-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    .status {
+        margin-left: 39vh
+    }
+
+    .footer {
+        margin-left: 39vh
+    }
+
+    .sidebar {
+        width: 25%;
+    }
+}
+
+
+@media (max-width: 1080px) {
+    body {
+        font-size: 16px;
+    }
+
+    .brave-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .disconnect-btn {
+        font-size: 16px;
+    }
+
+    .custom-select-wrapper {
+        width: 40%
+    }
+
+    .status {
+        margin-left: 36vh
+    }
+
+    .footer {
+        margin-left: 36vh
+    }
+
+    .sidebar {
+        height: -webkit-fill-available;
+        position: fixed;
+        width: 25%;
+    }
+
+}
+
+@media (max-width: 1000px) {
+    .status {
+        margin-left: 30vh
+    }
+
+    .footer {
+        margin-left: 30vh
+    }
+
+    .sidebar {
+        width: 25%;
+    }
 }

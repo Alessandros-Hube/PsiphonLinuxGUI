@@ -39,7 +39,7 @@ npm start
 
 2. Install the package:
 ```
-sudo dpkg -i psiphonlinuxgui_1.0.0_amd64.deb
+sudo dpkg -i psiphonlinuxgui_1.1.0_amd64.deb
 ```
 3. **Launch the application:** Locate Psiphon Linux GUI in your applications menu, or start it via the terminal:
 ```
@@ -52,7 +52,7 @@ psiphonlinuxgui
 
 2. Install the package:
 ```
-sudo dnf install psiphonlinuxgui-1.0.0.x86_64.rpm
+sudo dnf install psiphonlinuxgui-1.1.0.x86_64.rpm
 ```
 3. **Launch the application:** Locate Psiphon Linux GUI in your applications menu, or start it via the terminal:
 ```
