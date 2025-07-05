@@ -3,7 +3,7 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, shell } = require('electron')
 const path = require('node:path')
-const { exec, execSync, spawn} = require('child_process');
+const { exec, execSync, spawn } = require('child_process');
 const { ipcMain } = require('electron');
 
 const configPath = path.join(__dirname, 'configs');
@@ -16,7 +16,9 @@ let restoreProxySettings = [];
 const createWindow = () => {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
-        width: 1000,
+        minWidth: 800,
+        minHeight: 800,
+        width: 1080,
         height: 800,
         icon: `${imagePath}/psiphonlinuxgui.png`,
         autoHideMenuBar: true,
@@ -124,7 +126,7 @@ ipcMain.on('start-vpn-proxy-server', (event) => {
             event.reply('server-error', err);
             return;
         }
-    });  
+    });
 });
 
 // Listener for changing proxy settings
@@ -138,8 +140,8 @@ ipcMain.on('change-proxy-setting', (event, changeProxySettings) => {
         let prefixOutPrinted = false;
         process.stdout.on('data', (data) => {
             if (!prefixOutPrinted) {
-              console.log(`Executed proxy-${changeProxySetting}-on.sh successfully:`);
-              prefixOutPrinted = true;
+                console.log(`Executed proxy-${changeProxySetting}-on.sh successfully:`);
+                prefixOutPrinted = true;
             }
             console.log(data.toString()); // Log any output from stdout
         });
@@ -147,14 +149,14 @@ ipcMain.on('change-proxy-setting', (event, changeProxySettings) => {
         let prefixPrinted = false;
         process.stderr.on('data', (data) => {
             if (!prefixPrinted) {
-              console.log(`Script proxy-${changeProxySetting}-on.sh produced stderr:`);
-              prefixPrinted = true;
+                console.log(`Script proxy-${changeProxySetting}-on.sh produced stderr:`);
+                prefixPrinted = true;
             }
             console.log(data.toString()); // Log any warnings from stderr
             if (data.toString().includes("is not installed")) {
-              // Send a message back to the renderer process if a required dependency is missing
-              event.reply('proxy-setting-error', `${changeProxySetting}`);
-              return; // Exit the function if an error occurs
+                // Send a message back to the renderer process if a required dependency is missing
+                event.reply('proxy-setting-error', `${changeProxySetting}`);
+                return; // Exit the function if an error occurs
             }
         });
 
