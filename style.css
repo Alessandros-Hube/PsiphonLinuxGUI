@@ -1,9 +1,28 @@
+:root {
+    color-scheme: light dark;
+}
+
 body {
     font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
     margin: 0;
     padding: 0;
     font-size: xx-large;
+    background-color: light-dark(white, #333);
+    color: light-dark(black, white);
+}
+
+/* Light Mode */
+body.light {
+    background-color: white;
+    color: black;
+    color-scheme: light;
+}
+
+/* Dark Mode */
+body.dark {
+    background-color: #333;
+    color: white;
+    color-scheme: dark;
 }
 
 .container {
@@ -29,6 +48,22 @@ body {
     height: 50px;
 }
 
+#themeSelector {
+    font-size: 1rem;
+    padding: 0.4rem 0.75rem;
+    margin: 1rem;
+    border-radius: 4px;
+    border: 1px solid #aaa;
+    background: #004A8E;
+    color: inherit;
+    outline: none;
+    cursor: pointer;
+}
+
+#themeSelector:hover {
+    border-color: #666;
+}
+
 .status {
     text-align: center;
     padding: 2vh;
@@ -37,7 +72,7 @@ body {
     height: 80vh;
     width: -webkit-fill-available;
     margin-left: 55vh;
-    background-color: white;
+    background-color: light-dark(white, #333);
     position: fixed;
 }
 
@@ -61,7 +96,7 @@ body {
 .sidebar {
     float: left;
     width: 29%;
-    background-color: #f7f7f7;
+    background-color: light-dark(#f7f7f7, #181818);
     padding: 20px;
     padding-bottom: 10vh;
     margin-top: 7vh;
@@ -73,7 +108,7 @@ body {
 .footer {
     text-align: center;
     padding: 4.5vh 11vh 4.5vh 0vh;
-    background-color: #f7f7f7;
+    background-color: light-dark(#f7f7f7, #181818);
     margin-left: 55vh;
     position: fixed;
     left: 0;
@@ -101,7 +136,7 @@ body {
     justify-content: space-between;
     padding: 10px;
     cursor: pointer;
-    background-color: #fff;
+    background-color: light-dark(#fff, #333);
     border: none;
     border-radius: 4px;
 }
@@ -117,8 +152,8 @@ body {
 .custom-options {
     display: none;
     position: absolute;
-    background-color: #fff;
-    border: 1px solid #ddd;
+    background-color: light-dark(#fff, #333);
+    border: 1px solid light-dark(#ddd, #333);
     width: 100%;
     max-height: 188px;
     overflow-y: auto;
@@ -136,7 +171,7 @@ body {
 }
 
 .custom-options div:hover {
-    background-color: #f1f1f1;
+    background-color: light-dark(#f1f1f1, #181818);
 }
 
 .custom-options .fi,
