@@ -41,14 +41,11 @@ body {
     position: fixed;
 }
 
-.status h1 {
-    color: #0EAE51;
-}
-
 .disconnect-btn {
     display: block;
     margin: 20px auto;
     padding: 10px 30px;
+    width: 33vh;
     background-color: #d9534f;
     color: white;
     border: none;
@@ -229,6 +226,7 @@ input:checked+.slider:before {
 
     .disconnect-btn {
         font-size: x-large;
+        width: 30vh;
     }
 
     .sidebar {
@@ -259,6 +257,7 @@ input:checked+.slider:before {
 
     .disconnect-btn {
         font-size: 20px;
+        width: 30vh;
     }
 
     .status {

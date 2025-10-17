@@ -29,17 +29,14 @@ let isProxySettingsChanging = false;
 // Function to move to the next state in the application
 function nextState() {
     currentStateIndex = (currentStateIndex + 1) % states.length; // Cycle through states
-    updateStateDisplay(); // Update UI with the current state
 
     switch (currentStateIndex) {
         case 0: // STOPPED state
             ipcRenderer.send('shutdown'); // Notify main process to stop
             ipcRenderer.send('restore-settings'); // Restore original settings
             isProxySettingsChanging = false; // Reset flag
-            updateButton(); // Update button label
-            break;
+                        break;
         case 1: // STARTING state
-            updateStateDisplay(); // Ensure UI reflects state change
             const country = document.getElementById('customSelect').getAttribute("data-value"); // Get selected country
             createConfig(country); // Create config based on the selected country
             ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
@@ -71,12 +68,13 @@ function nextState() {
                 ipcRenderer.send('change-proxy-setting', changeProxySettings); // Apply new proxy settings
                 isProxySettingsChanging = true; // Set flag
             }
-            updateButton(); // Update button label
             break;
         default:
             break;
     }
     updateStateDisplay(); // Update UI at the end
+    updateButton(); // Update button label
+    updateIcon(); // Update icon
 }
 
 // Listener for handling proxy setting errors
@@ -196,6 +194,7 @@ function checkProxyAvailable(proxyType, proxyHost, proxyPort, retryInterval = 10
 function updateStateDisplay() {
     const currentStateElement = document.getElementById('currentState');
     currentStateElement.textContent = states[currentStateIndex]; // Display current state text
+    currentStateElement.style.color = (states[currentStateIndex] == "STARTED" ? "#229b40" : (states[currentStateIndex] == "STARTING" ? "#e9a442" : "#902232"));
 
     const currentStateIconElement = document.getElementById('currentStateIcon');
     const currentStateIcon = "./images/" + states[currentStateIndex] + (states[currentStateIndex] == "STARTING" ? ".gif" : ".png");
@@ -207,8 +206,22 @@ function updateButton() {
     const currentStateElement = document.getElementById('Button');
     if (currentStateIndex == 0) {
         currentStateElement.textContent = "CONNECT"; // Set button text for STOPPED state
+        document.getElementById('nextStateButton').style.backgroundColor = "#229b40";
+    } else if (currentStateIndex == 1) {
+        currentStateElement.textContent = "STOP"; // Set button text for STARTING state
+        document.getElementById('nextStateButton').style.backgroundColor = "#902232";
     } else if (currentStateIndex == 2) {
         currentStateElement.textContent = "DISCONNECT"; // Set button text for STARTED state
+        document.getElementById('nextStateButton').style.backgroundColor = "#902232";
+    }
+}
+
+// Function to update the icon
+function updateIcon() {
+    if (currentStateIndex == 0) {
+        document.getElementById('icon').setAttribute("src", "./images/psiphonlinuxgui-off.png");
+    } else if (currentStateIndex == 2) {
+        document.getElementById('icon').setAttribute("src", "./images/psiphonlinuxgui.png");
     }
 }
 
@@ -221,6 +234,7 @@ document.getElementById('customOptions').addEventListener('click', changeCountry
 // Initial UI update
 updateStateDisplay();
 updateButton();
+updateIcon();
 
 // Function to create a config file based on a selected country
 function createConfig(country) {
