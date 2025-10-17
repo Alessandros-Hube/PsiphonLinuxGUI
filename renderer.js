@@ -35,7 +35,7 @@ function nextState() {
             ipcRenderer.send('shutdown'); // Notify main process to stop
             ipcRenderer.send('restore-settings'); // Restore original settings
             isProxySettingsChanging = false; // Reset flag
-                        break;
+            break;
         case 1: // STARTING state
             const country = document.getElementById('customSelect').getAttribute("data-value"); // Get selected country
             createConfig(country); // Create config based on the selected country
@@ -327,3 +327,36 @@ document.getElementById('edge-checkbox').addEventListener('click', checkCheckbox
 
 // Initial call to set up checkbox status
 checkCheckboxStatus();
+
+// Run update check on startup
+checkForUpdate();
+
+// Function to check if a new version of the app is available on GitHub
+async function checkForUpdate() {
+    try {
+        const currentVersion = await ipcRenderer.invoke("get-version");
+        const response = await fetch('https://api.github.com/repos/Alessandros-Hube/PsiphonLinuxGUI/releases/latest');
+        const data = await response.json();
+        const latestVersion = data.tag_name.replace(/^v/, '');
+
+        if (isNewerVersion(latestVersion, currentVersion)) {
+            notifyBtn.style.display = "inline";
+            bannerText.textContent = `Version ${latestVersion} of PsiphonLinuxGUI is available!`;
+        } else {
+            notifyBtn.style.display = "none";
+        }
+    } catch (err) {
+        ipcRenderer.send('debug', [`${err}`]);
+    }
+}
+
+// Function to check if is latest version number newer then the current version number
+function isNewerVersion(latest, current) {
+    const latestParts = latest.split('.').map(Number);
+    const currentParts = current.split('.').map(Number);
+    for (let i = 0; i < latestParts.length; i++) {
+        if ((latestParts[i] || 0) > (currentParts[i] || 0)) return true;
+        if ((latestParts[i] || 0) < (currentParts[i] || 0)) return false;
+    }
+    return false;
+}

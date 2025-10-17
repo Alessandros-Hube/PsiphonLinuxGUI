@@ -14,11 +14,27 @@
     <div class="container">
         <div class="header">
             <img id="icon" src="./images/psiphonlinuxgui.png" alt="Psiphon Logo">
+
+            <div>
                 <select class="fa" id="themeSelector">
                     <option class="fa fa-adjust">&#xf042; &nbsp; Auto</option>
                     <option class="fa fa-sun">&#xf185; &nbsp; Light</option>
                     <option class="fa fa-moon">&#xf186; &nbsp; Dark</option>
                 </select>
+
+                <a href="#" class="notification" id="notifyBtn">
+                    <span class="fa-regular fa-bell"></span>
+                    <span class="badge"></span>
+                </a>
+            </div>
+            <div class="banner" id="updateBanner">
+                <button class="close-btn" id="closeBanner">&times;</button>
+                <div>
+                    <p id="bannerText">Update available! </p>
+                    <a href="https://github.com/Alessandros-Hube/PsiphonLinuxGUI/releases/latest" target="_blank">
+                        Update</a>
+                </div>
+            </div>
         </div>
 
         <div class="sidebar">
@@ -132,6 +148,31 @@
             </div>
         </div>
     </div>
+    <script>
+        const notifyBtn = document.getElementById('notifyBtn');
+        const banner = document.getElementById('updateBanner');
+        const closeBtn = document.getElementById('closeBanner');
+
+        notifyBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            banner.classList.toggle('show');
+        });
+
+
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            banner.classList.remove('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            const clickedInside =
+                banner.contains(e.target) || notifyBtn.contains(e.target);
+            if (!clickedInside) {
+                banner.classList.remove('show');
+            }
+        });
+    </script>
     <script>
         document.getElementById('customSelect').addEventListener('click', function () {
             this.parentNode.classList.toggle('open');

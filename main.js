@@ -283,3 +283,8 @@ ipcMain.on('restore-settings', () => {
     // Clear the restore list
     restoreProxySettings = [];
 });
+
+// Handler for an invoke the version number of the app
+ipcMain.handle('get-version', async () => {
+    return app.getVersion();
+});
