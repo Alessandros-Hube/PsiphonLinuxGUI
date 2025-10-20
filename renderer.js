@@ -11,13 +11,7 @@ const configPath = path.join(__dirname, 'configs');
 const states = ['STOPPED', 'STARTING', 'STARTED'];
 
 // Define an array of checkboxes with their properties
-let checkboxes = [
-    { id: 'firefox-checkbox', name: 'firefox', checked: false },
-    { id: 'chrome-checkbox', name: 'chrome', checked: false },
-    { id: 'opera-checkbox', name: 'opera', checked: false },
-    { id: 'brave-checkbox', name: 'brave', checked: false },
-    { id: 'edge-checkbox', name: 'edge', checked: false }
-];
+let checkboxes = [];
 
 // Array to hold proxy settings changes
 let changeProxySettings = [];
@@ -318,12 +312,55 @@ function setTheme(theme) {
 const savedTheme = localStorage.getItem("theme");
 setTheme(savedTheme);
 
+// Initial call to create browserList
+createBrowserList()
+
+// Create the browserToggles HTML containers for the browserList
+function createBrowserList() {
+    try {
+        const fileContent = fs.readFileSync(`${configPath}/browser.config`, 'utf-8');
+        const browserConfig = JSON.parse(fileContent);
+        let id = 0;
+        const browserToggles = browserConfig.map(browser => {
+            let iconHTML = '';
+            if (browser.icon.localPath) {
+                iconHTML = `
+                <span>
+                  <img class="localPath" src="${browser.icon.localPath}" alt="${browser.name}">
+                </span>`;
+            } else {
+                iconHTML = `<span class="${browser.icon.css}"></span>`;
+            }
+
+            id += 1;
+            checkboxes.push({ id: `${id}`, name: browser.name, checked: false });
+
+            return `
+            <div class="toggle-container">
+              ${iconHTML}
+              <div class="toggle-text">${browser.name}:</div>
+              <label class="switch">
+                <input type="checkbox" id="${id}">
+                <span class="slider"></span>
+              </label>
+            </div>`;
+        }).join('');
+
+        document.getElementById('browserList').innerHTML = browserToggles;
+    } catch (e) {
+        document.getElementById('browserList').innerHTML = "An error occurred while loading the browser configuration.<br><br>" + e.message;
+    }
+}
+
+// Initial call to add EventListener
+addEventListener();
+
 // Add event listeners to each checkbox for status checking
-document.getElementById('firefox-checkbox').addEventListener('click', checkCheckboxStatus);
-document.getElementById('chrome-checkbox').addEventListener('click', checkCheckboxStatus);
-document.getElementById('opera-checkbox').addEventListener('click', checkCheckboxStatus);
-document.getElementById('brave-checkbox').addEventListener('click', checkCheckboxStatus);
-document.getElementById('edge-checkbox').addEventListener('click', checkCheckboxStatus);
+function addEventListener() {
+    checkboxes.forEach(checkbox => {
+        document.getElementById(checkbox.id).addEventListener('click', checkCheckboxStatus);
+    });
+}
 
 // Initial call to set up checkbox status
 checkCheckboxStatus();

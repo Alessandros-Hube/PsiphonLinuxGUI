@@ -3,6 +3,7 @@
 }
 
 body {
+    overflow-y: hidden;
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -205,19 +206,22 @@ body.dark {
     float: left;
     width: 29%;
     background-color: light-dark(#f7f7f7, #181818);
-    padding: 20px;
+    padding: 1.5rem;
     padding-bottom: 10vh;
     margin-top: 7vh;
     position: absolute;
     z-index: 1;
 }
 
+#browserList {
+    overflow-y: auto;
+    height: 48vh;
+}
 
 .footer {
     text-align: center;
-    padding: 4.5vh 11vh 4.5vh 0vh;
+    padding: 4.5vh 11vh 4.5vh 55vh;
     background-color: light-dark(#f7f7f7, #181818);
-    margin-left: 55vh;
     position: fixed;
     left: 0;
     right: 0;
@@ -302,9 +306,9 @@ body.dark {
     height: 5vh;
 }
 
-.brave-icon {
-    width: 24px;
-    height: 24px;
+.localPath {
+    width: 30px;
+    height: 30px;
 }
 
 .toggle-text {
@@ -362,9 +366,9 @@ input:checked+.slider:before {
         font-size: x-large;
     }
 
-    .brave-icon {
-        width: x-large;
-        height: x-large;
+    .localPath {
+        width: 24px;
+        height: 24px;
     }
 
     .disconnect-btn {
@@ -384,7 +388,11 @@ input:checked+.slider:before {
     }
 
     .footer {
-        margin-left: 49vh
+        padding-left: 49vh
+    }
+
+    #browserList {
+        height: 45vh;
     }
 }
 
@@ -393,9 +401,9 @@ input:checked+.slider:before {
         font-size: 20px;
     }
 
-    .brave-icon {
-        width: 20px;
-        height: 20px;
+    .localPath {
+        width: 24px;
+        height: 24px;
     }
 
     .disconnect-btn {
@@ -408,13 +416,17 @@ input:checked+.slider:before {
     }
 
     .footer {
-        margin-left: 44vh
+        padding-left: 44vh
     }
 
     .sidebar {
         height: -webkit-fill-available;
         position: fixed;
         width: 25%;
+    }
+
+    #browserList {
+        height: 41vh;
     }
 }
 
@@ -427,7 +439,7 @@ input:checked+.slider:before {
         font-size: 18px;
     }
 
-    .brave-icon {
+    .localPath {
         width: 18px;
         height: 18px;
     }
@@ -437,7 +449,7 @@ input:checked+.slider:before {
     }
 
     .footer {
-        margin-left: 39vh
+        padding-left: 39vh
     }
 
     .sidebar {
@@ -451,7 +463,7 @@ input:checked+.slider:before {
         font-size: 16px;
     }
 
-    .brave-icon {
+    .localPath {
         width: 16px;
         height: 16px;
     }
@@ -469,13 +481,17 @@ input:checked+.slider:before {
     }
 
     .footer {
-        margin-left: 36vh
+        padding-left: 36vh
     }
 
     .sidebar {
         height: -webkit-fill-available;
         position: fixed;
         width: 25%;
+    }
+
+    #browserList {
+        height: 46vh;
     }
 
 }
@@ -486,7 +502,7 @@ input:checked+.slider:before {
     }
 
     .footer {
-        margin-left: 30vh
+        padding-left: 30vh
     }
 
     .sidebar {
