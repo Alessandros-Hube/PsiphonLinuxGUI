@@ -5,6 +5,7 @@ const { app, BrowserWindow, shell } = require('electron')
 const path = require('node:path')
 const { exec, execSync, spawn } = require('child_process');
 const { ipcMain } = require('electron');
+const fs = require('fs');
 
 const configPath = path.join(__dirname, 'configs');
 const corePath = path.join(__dirname, 'psiphon-tunnel-core-x86_64');
@@ -63,6 +64,22 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit()
 })
 
+// Function to get start and stop script for changing browser settings
+function getScript(name, scriptType) {
+    try {
+        const fileContent = fs.readFileSync(`${configPath}/browser.config`, 'utf-8');
+        const browserConfig = JSON.parse(fileContent);
+        const browser = browserConfig.find(b => b.name === name);
+        if (browser.scriptLocation == "interScript") {
+            return `${scriptPath}/${browser[scriptType]}`;
+        } else {
+            return browser[scriptType];
+        }
+    } catch (e) {
+        console.log("An error occurred while loading the browser configuration. " + e.message);
+    }
+}
+
 // Event listener for the process exit event
 process.on('exit', () => {
     // Iterate through the list of proxy settings to restore
@@ -77,15 +94,18 @@ process.on('exit', () => {
             }
             console.log('Process psiphon-tunnel-core-x86_64 killed:', stdout); // Log success message
         });
+
+        let stopScript = getScript(restoreProxySetting, "stopScript");
+
         // Execute a script to disable each proxy setting
-        execSync(`bash ${scriptPath}/proxy-${restoreProxySetting}-off.sh`, (error, stdout, stderr) => {
+        execSync(`bash ${stopScript}`, (error, stdout, stderr) => {
             if (error) {
-                console.error(`Failed to execute proxy-${restoreProxySetting}-off.sh:`, error); // Log error on script failure
+                console.error(`Failed to execute ${stopScript}:`, error); // Log error on script failure
             }
             if (stderr) {
-                console.log(`Script proxy-${restoreProxySetting}-off.sh produced stderr:`, stderr); // Log any warnings from stderr
+                console.log(`Script ${stopScript} produced stderr:`, stderr); // Log any warnings from stderr
             }
-            console.log(`Executed proxy-${restoreProxySetting}-off.sh:`, stdout); // Log success message
+            console.log(`Executed ${stopScript}:`, stdout); // Log success message
         });
     });
 
@@ -135,12 +155,14 @@ ipcMain.on('change-proxy-setting', (event, changeProxySettings) => {
 
     // Iterate through the proxy settings and execute the corresponding script
     notChangeProxySettings.forEach(changeProxySetting => {
-        const process = spawn("bash", [`${scriptPath}/proxy-${changeProxySetting}-on.sh`]);
+        let startScript = getScript(changeProxySetting, "startScript");
+
+        const process = spawn("bash", [`${startScript}`]);
 
         let prefixOutPrinted = false;
         process.stdout.on('data', (data) => {
             if (!prefixOutPrinted) {
-                console.log(`Executed proxy-${changeProxySetting}-on.sh successfully:`);
+                console.log(`Executed ${startScript} successfully:`);
                 prefixOutPrinted = true;
             }
             console.log(data.toString()); // Log any output from stdout
@@ -149,7 +171,7 @@ ipcMain.on('change-proxy-setting', (event, changeProxySettings) => {
         let prefixPrinted = false;
         process.stderr.on('data', (data) => {
             if (!prefixPrinted) {
-                console.log(`Script proxy-${changeProxySetting}-on.sh produced stderr:`);
+                console.log(`Script ${startScript} produced stderr:`);
                 prefixPrinted = true;
             }
             console.log(data.toString()); // Log any warnings from stderr
@@ -161,11 +183,11 @@ ipcMain.on('change-proxy-setting', (event, changeProxySettings) => {
         });
 
         process.on('close', (code) => {
-            console.log(`Process to execute proxy-${changeProxySetting}-on.sh exited with code ${code}`); // Log exit code
+            console.log(`Process to execute ${startScript} exited with code ${code}`); // Log exit code
         });
 
         process.on('error', (err) => {
-            console.log(`Failed to execute proxy-${changeProxySetting}-on.sh: ${err}`); // Log error if execution fails
+            console.log(`Failed to execute ${startScript}: ${err}`); // Log error if execution fails
             if (err.toString().includes("is not installed")) {
                 // Send a message back to the renderer process if a required dependency is missing
                 event.reply('proxy-setting-error', `${changeProxySetting}`);
@@ -216,13 +238,15 @@ ipcMain.on('restore-setting', (event, args) => {
         // Remove the setting from the restore list
         restoreProxySettings.splice(restoreProxySettings.indexOf(arg), 1);
 
+        let stopScript = getScript(arg, "stopScript");
+
         // Execute a script to turn off the proxy setting
-        const process = spawn("bash", [`${scriptPath}/proxy-${arg}-off.sh`]);
+        const process = spawn("bash", [`${stopScript}`]);
 
         let prefixOutPrinted = false;
         process.stdout.on('data', (data) => {
             if (!prefixOutPrinted) {
-                console.log(`Executed proxy-${arg}-off.sh:`);
+                console.log(`Executed ${stopScript}:`);
                 prefixOutPrinted = true;
             }
             console.log(data.toString()); // Log any output from stdout
@@ -231,18 +255,18 @@ ipcMain.on('restore-setting', (event, args) => {
         let prefixPrinted = false;
         process.stderr.on('data', (data) => {
             if (!prefixPrinted) {
-                console.log(`Script proxy-${arg}-off.sh produced stderr:`);
+                console.log(`Script ${stopScript} produced stderr:`);
                 prefixPrinted = true;
             }
             console.log(data.toString()); // Log any warnings from stderr
         });
 
         process.on('close', (code) => {
-            console.log(`Process to execute proxy-${arg}-off.sh exited with code ${code}`); // Log exit code
+            console.log(`Process to execute ${stopScript} exited with code ${code}`); // Log exit code
         });
 
         process.on('error', (err) => {
-            console.log(`Failed to execute proxy-${arg}-off.sh: ${err}`); // Log error if execution fails
+            console.log(`Failed to execute ${stopScript}: ${err}`); // Log error if execution fails
         });
     });
 });
@@ -251,13 +275,15 @@ ipcMain.on('restore-setting', (event, args) => {
 ipcMain.on('restore-settings', () => {
     // Iterate through all stored proxy settings
     restoreProxySettings.forEach(restoreProxySetting => {
+        let stopScript = getScript(restoreProxySetting, "stopScript");
+
         // Execute a script to turn off each proxy setting
-        const process = spawn("bash", [`${scriptPath}/proxy-${restoreProxySetting}-off.sh`]);
+        const process = spawn("bash", [`${stopScript}`]);
 
         let prefixOutPrinted = false;
         process.stdout.on('data', (data) => {
             if (!prefixOutPrinted) {
-                console.log(`Executed proxy-${restoreProxySetting}-off.sh:`);
+                console.log(`Executed ${stopScript}:`);
                 prefixOutPrinted = true;
             }
             console.log(data.toString()); // Log any output from stdout
@@ -266,20 +292,25 @@ ipcMain.on('restore-settings', () => {
         let prefixPrinted = false;
         process.stderr.on('data', (data) => {
             if (!prefixPrinted) {
-                console.log(`Script proxy-${restoreProxySetting}-off.sh produced stderr:`);
+                console.log(`Script ${stopScript} produced stderr:`);
                 prefixPrinted = true;
             }
             console.log(data.toString()); // Log any warnings from stderr
         });
 
         process.on('close', (code) => {
-            console.log(`Process to execute proxy-${restoreProxySetting}-off.sh exited with code ${code}`); // Log exit code
+            console.log(`Process to execute ${stopScript} exited with code ${code}`); // Log exit code
         });
 
         process.on('error', (err) => {
-            console.log(`Failed to execute proxy-${restoreProxySetting}-off.sh: ${err}`); // Log error if execution fails
+            console.log(`Failed to execute ${stopScript}: ${err}`); // Log error if execution fails
         });
     });
     // Clear the restore list
     restoreProxySettings = [];
+});
+
+// Handler for an invoke the version number of the app
+ipcMain.handle('get-version', async () => {
+    return app.getVersion();
 });

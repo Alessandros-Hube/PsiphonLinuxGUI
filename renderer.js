@@ -11,13 +11,7 @@ const configPath = path.join(__dirname, 'configs');
 const states = ['STOPPED', 'STARTING', 'STARTED'];
 
 // Define an array of checkboxes with their properties
-let checkboxes = [
-    { id: 'firefox-checkbox', name: 'firefox', checked: false },
-    { id: 'chrome-checkbox', name: 'chrome', checked: false },
-    { id: 'opera-checkbox', name: 'opera', checked: false },
-    { id: 'brave-checkbox', name: 'brave', checked: false },
-    { id: 'edge-checkbox', name: 'edge', checked: false }
-];
+let checkboxes = [];
 
 // Array to hold proxy settings changes
 let changeProxySettings = [];
@@ -29,17 +23,14 @@ let isProxySettingsChanging = false;
 // Function to move to the next state in the application
 function nextState() {
     currentStateIndex = (currentStateIndex + 1) % states.length; // Cycle through states
-    updateStateDisplay(); // Update UI with the current state
 
     switch (currentStateIndex) {
         case 0: // STOPPED state
             ipcRenderer.send('shutdown'); // Notify main process to stop
             ipcRenderer.send('restore-settings'); // Restore original settings
             isProxySettingsChanging = false; // Reset flag
-            updateButton(); // Update button label
             break;
         case 1: // STARTING state
-            updateStateDisplay(); // Ensure UI reflects state change
             const country = document.getElementById('customSelect').getAttribute("data-value"); // Get selected country
             createConfig(country); // Create config based on the selected country
             ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
@@ -71,12 +62,13 @@ function nextState() {
                 ipcRenderer.send('change-proxy-setting', changeProxySettings); // Apply new proxy settings
                 isProxySettingsChanging = true; // Set flag
             }
-            updateButton(); // Update button label
             break;
         default:
             break;
     }
     updateStateDisplay(); // Update UI at the end
+    updateButton(); // Update button label
+    updateIcon(); // Update icon
 }
 
 // Listener for handling proxy setting errors
@@ -196,6 +188,7 @@ function checkProxyAvailable(proxyType, proxyHost, proxyPort, retryInterval = 10
 function updateStateDisplay() {
     const currentStateElement = document.getElementById('currentState');
     currentStateElement.textContent = states[currentStateIndex]; // Display current state text
+    currentStateElement.style.color = (states[currentStateIndex] == "STARTED" ? "#229b40" : (states[currentStateIndex] == "STARTING" ? "#e9a442" : "#902232"));
 
     const currentStateIconElement = document.getElementById('currentStateIcon');
     const currentStateIcon = "./images/" + states[currentStateIndex] + (states[currentStateIndex] == "STARTING" ? ".gif" : ".png");
@@ -207,8 +200,22 @@ function updateButton() {
     const currentStateElement = document.getElementById('Button');
     if (currentStateIndex == 0) {
         currentStateElement.textContent = "CONNECT"; // Set button text for STOPPED state
+        document.getElementById('nextStateButton').style.backgroundColor = "#229b40";
+    } else if (currentStateIndex == 1) {
+        currentStateElement.textContent = "STOP"; // Set button text for STARTING state
+        document.getElementById('nextStateButton').style.backgroundColor = "#902232";
     } else if (currentStateIndex == 2) {
         currentStateElement.textContent = "DISCONNECT"; // Set button text for STARTED state
+        document.getElementById('nextStateButton').style.backgroundColor = "#902232";
+    }
+}
+
+// Function to update the icon
+function updateIcon() {
+    if (currentStateIndex == 0) {
+        document.getElementById('icon').setAttribute("src", "./images/psiphonlinuxgui-off.png");
+    } else if (currentStateIndex == 2) {
+        document.getElementById('icon').setAttribute("src", "./images/psiphonlinuxgui.png");
     }
 }
 
@@ -221,6 +228,7 @@ document.getElementById('customOptions').addEventListener('click', changeCountry
 // Initial UI update
 updateStateDisplay();
 updateButton();
+updateIcon();
 
 // Function to create a config file based on a selected country
 function createConfig(country) {
@@ -282,12 +290,110 @@ function checkCheckboxStatus() {
     }
 }
 
+// Function to change the theme when the user selects an option
+function changeTheme() {
+    const theme = document.getElementById('themeSelector').selectedIndex;
+    document.body.classList.remove("light", "dark", "auto");
+    document.body.classList.add((theme == 1 ? "light" : (theme == 2 ? "dark" : "auto")));
+    localStorage.setItem("theme", theme);
+}
+
+// Add a click event listener to the dropdown to trigger theme change
+document.getElementById('themeSelector').addEventListener('click', changeTheme);
+
+// Function to set the theme based on a saved value
+function setTheme(theme) {
+    document.body.classList.remove("light", "dark", "auto");
+    document.body.classList.add((theme == 1 ? "light" : (theme == 2 ? "dark" : "auto")));
+    document.getElementById('themeSelector').selectedIndex = theme;
+}
+
+// Load the saved theme from localStorage
+const savedTheme = localStorage.getItem("theme");
+setTheme(savedTheme);
+
+// Initial call to create browserList
+createBrowserList()
+
+// Create the browserToggles HTML containers for the browserList
+function createBrowserList() {
+    try {
+        const fileContent = fs.readFileSync(`${configPath}/browser.config`, 'utf-8');
+        const browserConfig = JSON.parse(fileContent);
+        let id = 0;
+        const browserToggles = browserConfig.map(browser => {
+            let iconHTML = '';
+            if (browser.icon.localPath) {
+                iconHTML = `
+                <span>
+                  <img class="localPath" src="${browser.icon.localPath}" alt="${browser.name}">
+                </span>`;
+            } else {
+                iconHTML = `<span class="${browser.icon.css}"></span>`;
+            }
+
+            id += 1;
+            checkboxes.push({ id: `${id}`, name: browser.name, checked: false });
+
+            return `
+            <div class="toggle-container">
+              ${iconHTML}
+              <div class="toggle-text">${browser.name}:</div>
+              <label class="switch">
+                <input type="checkbox" id="${id}">
+                <span class="slider"></span>
+              </label>
+            </div>`;
+        }).join('');
+
+        document.getElementById('browserList').innerHTML = browserToggles;
+    } catch (e) {
+        document.getElementById('browserList').innerHTML = "An error occurred while loading the browser configuration.<br><br>" + e.message;
+    }
+}
+
+// Initial call to add EventListener
+addEventListener();
+
 // Add event listeners to each checkbox for status checking
-document.getElementById('firefox-checkbox').addEventListener('click', checkCheckboxStatus);
-document.getElementById('chrome-checkbox').addEventListener('click', checkCheckboxStatus);
-document.getElementById('opera-checkbox').addEventListener('click', checkCheckboxStatus);
-document.getElementById('brave-checkbox').addEventListener('click', checkCheckboxStatus);
-document.getElementById('edge-checkbox').addEventListener('click', checkCheckboxStatus);
+function addEventListener() {
+    checkboxes.forEach(checkbox => {
+        document.getElementById(checkbox.id).addEventListener('click', checkCheckboxStatus);
+    });
+}
 
 // Initial call to set up checkbox status
 checkCheckboxStatus();
+
+// Run update check on startup
+checkForUpdate();
+
+// Function to check if a new version of the app is available on GitHub
+async function checkForUpdate() {
+    try {
+        const currentVersion = await ipcRenderer.invoke("get-version");
+        const response = await fetch('https://api.github.com/repos/Alessandros-Hube/PsiphonLinuxGUI/releases/latest');
+        const data = await response.json();
+        const latestVersion = data.tag_name.replace(/^v/, '');
+
+        if (isNewerVersion(latestVersion, currentVersion)) {
+            notifyBtn.style.display = "inline";
+            bannerText.textContent = `Version ${latestVersion} of PsiphonLinuxGUI is available!`;
+        } else {
+            notifyBtn.style.display = "none";
+        }
+    } catch (err) {
+        ipcRenderer.send('debug', [`${err}`]);
+    }
+}
+
+// Function to check if is latest version number newer then the current version number
+function isNewerVersion(latest, current) {
+    const latestParts = latest.split('.').map(Number);
+    const currentParts = current.split('.').map(Number);
+    for (let i = 0; i < latestParts.length; i++) {
+        if ((latestParts[i] || 0) > (currentParts[i] || 0)) return true;
+        if ((latestParts[i] || 0) < (currentParts[i] || 0)) return false;
+    }
+    return false;
+}
