@@ -5,6 +5,7 @@ const { app, BrowserWindow, shell } = require('electron')
 const path = require('node:path')
 const { exec, execSync, spawn } = require('child_process');
 const { ipcMain } = require('electron');
+const { userConfigPath } = require('./util');
 const fs = require('fs');
 
 const configPath = path.join(__dirname, 'configs');
@@ -14,9 +15,12 @@ const scriptPath = path.join(__dirname, 'scripts');
 
 let restoreProxySettings = [];
 
+let mainWindow = null;
+let childWindow = null;
+
 const createWindow = () => {
     // Create the browser window.
-    const mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         minWidth: 800,
         minHeight: 800,
         width: 1080,
@@ -43,6 +47,33 @@ const createWindow = () => {
     });
 }
 
+function createSettingsWindow() {
+    // Create the setting window.
+    childWindow = new BrowserWindow({
+        title: "Setting",
+        width: 700,
+        height: 600,
+
+        minimizable: false,
+        maximizable: false,
+        resizable: false,
+
+        autoHideMenuBar: true,
+        parent: mainWindow,
+        modal: true,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    });
+
+    // and load the settings.html of the app.
+    childWindow.loadFile('settings.html');
+
+    // Open the DevTools.
+    // childWindow.webContents.openDevTools();
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -67,7 +98,7 @@ app.on('window-all-closed', () => {
 // Function to get start and stop script for changing browser settings
 function getScript(name, scriptType) {
     try {
-        const fileContent = fs.readFileSync(`${configPath}/browser.config`, 'utf-8');
+        const fileContent = fs.readFileSync(userConfigPath, 'utf-8');
         const browserConfig = JSON.parse(fileContent);
         const browser = browserConfig.find(b => b.name === name);
         if (browser.scriptLocation == "interScript") {
@@ -119,6 +150,11 @@ process.on('exit', () => {
         }
         console.log('Process psiphon-tunnel-core-x86_64 killed:', stdout); // Log success message
     });
+});
+
+// Listener for opening the settings page
+ipcMain.on('open-settings-page', () => {
+    createSettingsWindow();
 });
 
 // Listener for starting the VPN/proxy server
@@ -308,6 +344,13 @@ ipcMain.on('restore-settings', () => {
     });
     // Clear the restore list
     restoreProxySettings = [];
+});
+
+// Listener to refresh the browser list 
+ipcMain.on('browser-list-updated', () => {
+    if (mainWindow) {
+        mainWindow.webContents.send('refresh-browser-list');
+    }
 });
 
 // Handler for an invoke the version number of the app

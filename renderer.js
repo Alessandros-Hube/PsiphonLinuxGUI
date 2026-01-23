@@ -1,5 +1,7 @@
 // Import required modules from Electron and Node.js
 const { ipcRenderer } = require('electron');
+const { createBrowserList } = require('./util');
+
 const fs = require('fs');
 const http = require('http');
 const net = require('net');
@@ -219,11 +221,19 @@ function updateIcon() {
     }
 }
 
+// Function to open the setting page
+function openSettingsPage() {
+    ipcRenderer.send('open-settings-page')
+}
+
 // Event listener for the button to switch states
 document.getElementById('nextStateButton').addEventListener('click', nextState);
 
 // Event listener for changing country options
 document.getElementById('customOptions').addEventListener('click', changeCountry);
+
+// Event listener for the button to open the setting page
+document.getElementById('settingsBtn').addEventListener('click', openSettingsPage);
 
 // Initial UI update
 updateStateDisplay();
@@ -313,29 +323,27 @@ const savedTheme = localStorage.getItem("theme");
 setTheme(savedTheme);
 
 // Initial call to create browserList
-createBrowserList()
+createBrowserList(document.getElementById('browserList'), createBrowserListItem);
+
+// Listener for handling refresh browser list
+ipcRenderer.on('refresh-browser-list', () => {
+    checkboxes = [];
+    createBrowserList(document.getElementById('browserList'), createBrowserListItem);
+    addEventListener();
+});
 
 // Create the browserToggles HTML containers for the browserList
-function createBrowserList() {
-    try {
-        const fileContent = fs.readFileSync(`${configPath}/browser.config`, 'utf-8');
-        const browserConfig = JSON.parse(fileContent);
-        let id = 0;
-        const browserToggles = browserConfig.map(browser => {
-            let iconHTML = '';
-            if (browser.icon.localPath) {
-                iconHTML = `
-                <span>
-                  <img class="localPath" src="${browser.icon.localPath}" alt="${browser.name}">
-                </span>`;
-            } else {
-                iconHTML = `<span class="${browser.icon.css}"></span>`;
-            }
+function createBrowserListItem(browserConfig) {
+    return browserConfig.map((browser, id) => {
+        let iconHTML =
+            browser.icon.localPath ?
+                `<span><img class="localPath" src="${browser.icon.localPath}" alt="${browser.name}"></span>` :
+                `<span class="${browser.icon.css}"></span>`;
 
-            id += 1;
-            checkboxes.push({ id: `${id}`, name: browser.name, checked: false });
+        id += 1;
+        checkboxes.push({ id: `${id}`, name: browser.name, checked: false });
 
-            return `
+        return `
             <div class="toggle-container">
               ${iconHTML}
               <div class="toggle-text">${browser.name}:</div>
@@ -344,12 +352,7 @@ function createBrowserList() {
                 <span class="slider"></span>
               </label>
             </div>`;
-        }).join('');
-
-        document.getElementById('browserList').innerHTML = browserToggles;
-    } catch (e) {
-        document.getElementById('browserList').innerHTML = "An error occurred while loading the browser configuration.<br><br>" + e.message;
-    }
+    }).join('');
 }
 
 // Initial call to add EventListener

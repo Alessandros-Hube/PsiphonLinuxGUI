@@ -65,6 +65,21 @@ body.dark {
     border-color: #666;
 }
 
+#settingsBtn {
+    font-size: 1rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #aaa;
+    background: #004A8E;
+    color: inherit;
+    outline: none;
+    cursor: pointer;
+}
+
+#settingsBtn:hover {
+    border-color: #666;
+}
+
 .notification {
     color: white;
     padding: 0.4rem 0.75rem;
