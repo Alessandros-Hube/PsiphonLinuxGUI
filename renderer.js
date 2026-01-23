@@ -34,6 +34,9 @@ function nextState() {
             break;
         case 1: // STARTING state
             const country = document.getElementById('customSelect').getAttribute("data-value"); // Get selected country
+            if (localStorage.getItem("country") == "true") {
+                localStorage.setItem("latestCountry", country);
+            }
             createConfig(country); // Create config based on the selected country
             ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
 
@@ -98,6 +101,19 @@ ipcRenderer.on('server-error', (event, err) => {
     nextState();
     alert(`Failed to execute psiphon-tunnel-core-x86_64. The file is not executable. ${err.toString()}`);
 });
+
+
+if (localStorage.getItem("country") == "true") {
+    document.querySelectorAll('#customOptions div').forEach((option) => {
+        var value = option.getAttribute('data-value');
+        var icon = option.querySelector('i, .fi').className;
+        var text = option.textContent.trim();
+        if (localStorage.getItem("latestCountry") == value) {
+            document.getElementById('customSelect').innerHTML = '<span class="' + icon + '"></span> ' + text + ' <button id="toggleButton"><i class="fa-solid fa-caret-down"></i></button>';
+            document.getElementById('customSelect').setAttribute('data-value', value);
+        }
+    });
+}
 
 // Function to change the country setting and reset the state if needed
 function changeCountry() {
@@ -282,6 +298,10 @@ function checkCheckboxStatus() {
     checkboxes.forEach(checkbox => {
         let newChecked = getCheckboxStatus(checkbox.id);
 
+        if (localStorage.getItem("browserScrips") == "true") {
+            localStorage.setItem(checkbox.name, newChecked);
+        }
+
         if (!newChecked && checkbox.checked) {
             // Remove unchecked proxy setting if previously checked
             changeProxySettings.splice(changeProxySettings.indexOf(checkbox.name), 1);
@@ -361,6 +381,9 @@ addEventListener();
 // Add event listeners to each checkbox for status checking
 function addEventListener() {
     checkboxes.forEach(checkbox => {
+        if (localStorage.getItem("browserScrips") == "true") {
+            document.getElementById(checkbox.id).checked = localStorage.getItem(checkbox.name) == "true" ? true : false;
+        }
         document.getElementById(checkbox.id).addEventListener('click', checkCheckboxStatus);
     });
 }

@@ -16,6 +16,28 @@ function setTheme(theme) {
 const savedTheme = localStorage.getItem("theme");
 setTheme(savedTheme);
 
+
+function initGeneral() {
+    document.getElementById("browserScrips").checked = localStorage.getItem("browserScrips") == "true" ? true : false;
+    document.getElementById("country").checked = localStorage.getItem("country") == "true" ? true : false;
+}
+
+initGeneral();
+
+
+// Initial call to add EventListener
+addEventListener();
+
+// Add event listeners to each checkbox for status checking
+function addEventListener() {
+    ["browserScrips", "country"].forEach(key => {
+        document.getElementById(key).addEventListener('click', () => {
+            localStorage.setItem(key, document.getElementById(key).checked);
+        });
+    });
+
+}
+
 // Drag & drop function 
 document.addEventListener('DOMContentLoaded', () => {
     const list = document.querySelector('.setting-browser-list');
