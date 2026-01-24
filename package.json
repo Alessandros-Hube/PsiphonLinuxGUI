@@ -34,7 +34,7 @@
       "executableName": "psiphonlinuxgui",
       "desktop": {
         "Name": "Psiphon Proxy Server",
-        "Icon": "/opt/psiphonlinuxgui/resources/app/images/psiphonlinuxgui.png",
+        "Icon": "psiphonlinuxgui",
         "Encoding": "UTF-8"
       }
     },
