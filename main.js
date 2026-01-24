@@ -353,6 +353,13 @@ ipcMain.on('browser-list-updated', () => {
     }
 });
 
+// Listener to refresh the theme 
+ipcMain.on('theme-updated', () => {
+    if (mainWindow) {
+        mainWindow.webContents.send('refresh-theme');
+    }
+});
+
 // Handler for an invoke the version number of the app
 ipcMain.handle('get-version', async () => {
     return app.getVersion();

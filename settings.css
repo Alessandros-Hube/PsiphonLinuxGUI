@@ -93,6 +93,21 @@ input:checked+.slider:before {
     transform: translateX(25px);
 }
 
+#themeSelector {
+    font-size: 1rem;
+    padding: 0.4rem 0.75rem;
+    margin: 1rem;
+    border-radius: 4px;
+    border: 1px solid light-dark(#ccc, #555);
+    color: inherit;
+    outline: none;
+    cursor: pointer;
+}
+
+#themeSelector:hover {
+    border-color: light-dark(#888, #777);
+}
+
 .settings-wrapper {
     display: flex;
     flex-direction: row;

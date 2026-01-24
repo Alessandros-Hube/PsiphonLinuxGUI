@@ -6,10 +6,23 @@ const fs = require('fs');
 const modal = document.getElementById('new-browser-modal');
 const iconInput = document.getElementById('icon');
 
+// Function to change the theme when the user selects an option
+function changeTheme() {
+    const theme = document.getElementById('themeSelector').selectedIndex;
+    document.body.classList.remove("light", "dark", "auto");
+    document.body.classList.add((theme == 1 ? "light" : (theme == 2 ? "dark" : "auto")));
+    localStorage.setItem("theme", theme);
+    ipcRenderer.send('theme-updated');
+}
+
+// Add a click event listener to the dropdown to trigger theme change
+document.getElementById('themeSelector').addEventListener('click', changeTheme);
+
 // Function to set the theme based on a saved value
 function setTheme(theme) {
     document.body.classList.remove("light", "dark", "auto");
     document.body.classList.add((theme == 1 ? "light" : (theme == 2 ? "dark" : "auto")));
+    document.getElementById('themeSelector').selectedIndex = theme;
 }
 
 // Load the saved theme from localStorage
@@ -35,7 +48,6 @@ function addEventListener() {
             localStorage.setItem(key, document.getElementById(key).checked);
         });
     });
-
 }
 
 // Drag & drop function 
