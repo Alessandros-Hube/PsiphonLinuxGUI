@@ -1,13 +1,9 @@
 // Import required modules from Electron and Node.js
 const { ipcRenderer } = require('electron');
-const { createBrowserList } = require('./util');
+const { createBrowserList, createPsiphonConfig } = require('./util');
 
-const fs = require('fs');
 const http = require('http');
 const net = require('net');
-
-const path = require('path');
-const configPath = path.join(__dirname, 'configs');
 
 // Define the states the application can be in
 const states = ['STOPPED', 'STARTING', 'STARTED'];
@@ -37,7 +33,7 @@ function nextState() {
             if (localStorage.getItem("country") == "true") {
                 localStorage.setItem("latestCountry", country);
             }
-            createConfig(country); // Create config based on the selected country
+            createPsiphonConfig(country); // Create config based on the selected country
             ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
 
             // Check if the HTTP and SOCKS proxies are available
@@ -256,25 +252,6 @@ updateStateDisplay();
 updateButton();
 updateIcon();
 
-// Function to create a config file based on a selected country
-function createConfig(country) {
-    try {
-        // Read the base config file
-        let baseConfig = fs.readFileSync(`${configPath}/base.config`, 'utf-8');
-        // Parse the content as JSON
-        let configJson = JSON.parse(baseConfig);
-        // Modify the EgressRegion property
-        configJson.EgressRegion = country;
-        // Convert JSON back to formatted string
-        let newConfig = JSON.stringify(configJson, null, 2);
-        // Write the new config to a file
-        fs.writeFileSync(`${configPath}/psiphon.config`, newConfig, 'utf-8');
-    } catch (e) {
-        // Display an alert in case of an error
-        alert('Failed to save the file! Error: ' + e.message);
-    }
-}
-
 // Function to get the status of a checkbox by its ID
 function getCheckboxStatus(id) {
     return document.getElementById(id).checked; // Return the checked state of the checkbox
@@ -403,7 +380,7 @@ async function checkForUpdate() {
             notifyBtn.style.display = "none";
         }
     } catch (err) {
-        ipcRenderer.send('debug', [`${err}`]);
+        console.log(err);
     }
 }
 

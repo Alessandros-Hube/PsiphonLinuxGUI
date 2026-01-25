@@ -1,17 +1,15 @@
-// main.js
-
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, shell } = require('electron')
 const path = require('node:path')
-const { exec, execSync, spawn } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const { ipcMain } = require('electron');
 const { userConfigPath } = require('./util');
 const fs = require('fs');
 
-const configPath = path.join(__dirname, 'configs');
 const corePath = path.join(__dirname, 'psiphon-tunnel-core-x86_64');
 const imagePath = path.join(__dirname, 'images');
 const scriptPath = path.join(__dirname, 'scripts');
+const psiphonPath = path.join(__dirname, 'psiphon.sh');
 
 let restoreProxySettings = [];
 
@@ -28,7 +26,6 @@ const createWindow = () => {
         icon: `${imagePath}/psiphonlinuxgui.png`,
         autoHideMenuBar: true,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: true,
             contextIsolation: false
         }
@@ -40,7 +37,7 @@ const createWindow = () => {
     // Open the DevTools.
     // mainWindow.webContents.openDevTools()
 
-    // Event-Handler für neue Fenster
+    // Event handler for new windows
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
         return { action: 'deny' };
@@ -111,20 +108,89 @@ function getScript(name, scriptType) {
     }
 }
 
+// Function to run a process with given command and arguments
+function runProcess({ command, args = [], label = '', onStdErr, onError, event }) {
+    const process = spawn(command, args);
+
+    let stdoutPrinted = false;
+    let stderrPrinted = false;
+
+    process.stdout.on('data', data => {
+        if (!stdoutPrinted && label) {
+            console.log(`Executed ${label}:`);
+            stdoutPrinted = true;
+        }
+        console.log(data.toString());
+    });
+
+    process.stderr.on('data', data => {
+        if (!stderrPrinted && label) {
+            console.log(`stderr from ${label}:`);
+            stderrPrinted = true;
+        }
+
+        const msg = data.toString();
+        console.log(msg);
+
+        if (onStdErr) onStdErr(msg, event);
+    });
+
+    process.on('close', code => {
+        console.log(`Process ${label} exited with code ${code}`);
+    });
+
+    process.on('error', err => {
+        console.log(`Failed to execute ${label}: ${err}`);
+        if (onError) onError(err, event);
+    });
+}
+
+// Function to execute start/stop scripts for changing proxy settings
+function executeScripts(proxySettings, scriptType, event) {
+    // Iterate through the proxy settings and execute the corresponding script
+    proxySettings.forEach(proxySetting => {
+        const script = getScript(proxySetting, scriptType);
+
+        runProcess({
+            command: 'bash',
+            args: [script],
+            label: script,
+            event,
+            onStdErr: (msg, event) => {
+                if (event && msg.includes('is not installed')) {
+                    event.reply('proxy-setting-error', proxySetting);
+                }
+            },
+            onError: (err, event) => {
+                if (event && err.toString().includes('is not installed')) {
+                    event.reply('proxy-setting-error', proxySetting);
+                }
+            }
+        });
+    });
+}
+
+// Function to execute start/stop script for changing proxy settings
+function executeStartStopScript(command, args, event) {
+    runProcess({
+        command,
+        args,
+        label: `${command} ${args[0]}`,
+        event,
+        onError: (err, event) => {
+            if (event && err.toString().includes('EACCES')) {
+                event.reply('server-error', err);
+            }
+        }
+    });
+}
+
 // Event listener for the process exit event
 process.on('exit', () => {
     // Iterate through the list of proxy settings to restore
     restoreProxySettings.forEach(restoreProxySetting => {
-        // Execute a command to kill the psiphon-tunnel-core process
-        exec('pkill -f psiphon-tunnel-core-x86_64', (error, stdout, stderr) => {
-            if (error) {
-                console.log('Failed to kill process:', error); // Log error if the process fails to terminate
-            }
-            if (stderr) {
-                console.log(stderr); // Log any warnings from stderr
-            }
-            console.log('Process psiphon-tunnel-core-x86_64 killed:', stdout); // Log success message
-        });
+        // Execute a command to kill the psiphon-tunnel-core process synchronously
+        executeStartStopScript(psiphonPath, ['stop'], null)
 
         let stopScript = getScript(restoreProxySetting, "stopScript");
 
@@ -140,15 +206,15 @@ process.on('exit', () => {
         });
     });
 
-    // Execute a command to kill the psiphon-tunnel-core process
-    exec('pkill -f psiphon-tunnel-core-x86_64', (error, stdout, stderr) => {
-        if (error) {
-            console.log('Failed to kill process:', error); // Log error if the process fails to terminate
-        }
-        if (stderr) {
-            console.log(stderr); // Log any warnings from stderr
-        }
-        console.log('Process psiphon-tunnel-core-x86_64 killed:', stdout); // Log success message
+    // Execute a command to kill the psiphon-tunnel-core process synchronously
+    executeStartStopScript(psiphonPath, ['stop'], null)
+});
+
+// Listener for debug logging
+ipcMain.on('debug', (_, args) => {
+    // Log each debug argument to the console
+    args.forEach(arg => {
+        console.log(arg);
     });
 });
 
@@ -160,188 +226,44 @@ ipcMain.on('open-settings-page', () => {
 // Listener for starting the VPN/proxy server
 ipcMain.on('start-vpn-proxy-server', (event) => {
     // Execute a command to start the psiphon-tunnel-core with a specific configuration
-    const process = spawn(corePath, ['-config', `${configPath}/psiphon.config`]);
-
-    console.log('Run psiphon-tunnel-core-x86_64 with this config configs/psiphon.config');
-
-    process.stdout.on('data', (data) => {
-        console.log(data.toString()); // Log any output from stdout
-    });
-
-    process.stderr.on('data', (data) => {
-        console.log(data.toString()); // Log any warnings from stderr
-    });
-
-    process.on('close', (code) => {
-        console.log(`Process to run psiphon-tunnel-core-x86_64 exited with code ${code}`); // Log exit code
-    });
-
-    process.once('error', (err) => {
-        console.log(`Failed to run psiphon-tunnel-core-x86_64: ${err}`); // Log error if execution fails
-        if (err.toString().includes("EACCES")) {
-            event.reply('server-error', err);
-            return;
-        }
-    });
-});
-
-// Listener for changing proxy settings
-ipcMain.on('change-proxy-setting', (event, changeProxySettings) => {
-    const notChangeProxySettings = changeProxySettings.filter(item => !restoreProxySettings.includes(item));
-
-    // Iterate through the proxy settings and execute the corresponding script
-    notChangeProxySettings.forEach(changeProxySetting => {
-        let startScript = getScript(changeProxySetting, "startScript");
-
-        const process = spawn("bash", [`${startScript}`]);
-
-        let prefixOutPrinted = false;
-        process.stdout.on('data', (data) => {
-            if (!prefixOutPrinted) {
-                console.log(`Executed ${startScript} successfully:`);
-                prefixOutPrinted = true;
-            }
-            console.log(data.toString()); // Log any output from stdout
-        });
-
-        let prefixPrinted = false;
-        process.stderr.on('data', (data) => {
-            if (!prefixPrinted) {
-                console.log(`Script ${startScript} produced stderr:`);
-                prefixPrinted = true;
-            }
-            console.log(data.toString()); // Log any warnings from stderr
-            if (data.toString().includes("is not installed")) {
-                // Send a message back to the renderer process if a required dependency is missing
-                event.reply('proxy-setting-error', `${changeProxySetting}`);
-                return; // Exit the function if an error occurs
-            }
-        });
-
-        process.on('close', (code) => {
-            console.log(`Process to execute ${startScript} exited with code ${code}`); // Log exit code
-        });
-
-        process.on('error', (err) => {
-            console.log(`Failed to execute ${startScript}: ${err}`); // Log error if execution fails
-            if (err.toString().includes("is not installed")) {
-                // Send a message back to the renderer process if a required dependency is missing
-                event.reply('proxy-setting-error', `${changeProxySetting}`);
-                return; // Exit the function if an error occurs
-            }
-        });
-    });
-    // Update the list of proxy settings that need to be restored
-    restoreProxySettings = changeProxySettings;
-});
-
-// Listener for debug logging
-ipcMain.on('debug', (event, args) => {
-    // Log each debug argument to the console
-    args.forEach(arg => {
-        console.log(arg);
-    });
+    executeStartStopScript(psiphonPath, ['start', `${corePath}`], event)
 });
 
 // Listener for shutting down the VPN/proxy server
 ipcMain.on('shutdown', () => {
     // Execute a command to kill the psiphon-tunnel-core process synchronously
-    const process = spawn("pkill", ['-f', "psiphon-tunnel-core-x86_64"]);
+    executeStartStopScript(psiphonPath, ['stop'], null)
+});
 
-    console.log('Process psiphon-tunnel-core-x86_64 killed');
+// Listener for changing proxy settings
+ipcMain.on('change-proxy-setting', (event, changeProxySettings) => {
+    // Determine which proxy settings are new and need to be started
+    let notChangeProxySettings = changeProxySettings.filter(item => !restoreProxySettings.includes(item));
 
-    process.stdout.on('data', (data) => {
-        console.log(data.toString()); // Log any output from stdout
-    });
+    // Execute the start script for the new proxy settings
+    executeScripts(notChangeProxySettings, "startScript", event);
 
-    process.stderr.on('data', (data) => {
-        console.log(data.toString()); // Log any warnings from stderr
-    });
-
-    process.on('close', (code) => {
-        console.log(`Process to kill psiphon-tunnel-core-x86_64 exited with code ${code}`); // Log exit code
-    });
-
-    process.on('error', (err) => {
-        console.log(`Failed to kill psiphon-tunnel-core-x86_64: ${err}`); // Log error if execution fails
-    });
+    // Update the list of proxy settings that need to be restored
+    restoreProxySettings = changeProxySettings;
 });
 
 // Listener for restoring individual proxy settings
-ipcMain.on('restore-setting', (event, args) => {
-    // Iterate over each proxy setting to be restored
+ipcMain.on('restore-setting', (_, args) => {
+    // Execute the stop script for the specified proxy settings
+    executeScripts(args, "stopScript", null);
+
+    // Update the restore list by removing the restored settings
     args.forEach(arg => {
         // Remove the setting from the restore list
         restoreProxySettings.splice(restoreProxySettings.indexOf(arg), 1);
-
-        let stopScript = getScript(arg, "stopScript");
-
-        // Execute a script to turn off the proxy setting
-        const process = spawn("bash", [`${stopScript}`]);
-
-        let prefixOutPrinted = false;
-        process.stdout.on('data', (data) => {
-            if (!prefixOutPrinted) {
-                console.log(`Executed ${stopScript}:`);
-                prefixOutPrinted = true;
-            }
-            console.log(data.toString()); // Log any output from stdout
-        });
-
-        let prefixPrinted = false;
-        process.stderr.on('data', (data) => {
-            if (!prefixPrinted) {
-                console.log(`Script ${stopScript} produced stderr:`);
-                prefixPrinted = true;
-            }
-            console.log(data.toString()); // Log any warnings from stderr
-        });
-
-        process.on('close', (code) => {
-            console.log(`Process to execute ${stopScript} exited with code ${code}`); // Log exit code
-        });
-
-        process.on('error', (err) => {
-            console.log(`Failed to execute ${stopScript}: ${err}`); // Log error if execution fails
-        });
     });
 });
 
 // Listener for restoring all proxy settings
-ipcMain.on('restore-settings', () => {
-    // Iterate through all stored proxy settings
-    restoreProxySettings.forEach(restoreProxySetting => {
-        let stopScript = getScript(restoreProxySetting, "stopScript");
+ipcMain.on('restore-settings', (_) => {
+    // Execute the stop script for all proxy settings in the restore list
+    executeScripts(restoreProxySettings, "stopScript", null);
 
-        // Execute a script to turn off each proxy setting
-        const process = spawn("bash", [`${stopScript}`]);
-
-        let prefixOutPrinted = false;
-        process.stdout.on('data', (data) => {
-            if (!prefixOutPrinted) {
-                console.log(`Executed ${stopScript}:`);
-                prefixOutPrinted = true;
-            }
-            console.log(data.toString()); // Log any output from stdout
-        });
-
-        let prefixPrinted = false;
-        process.stderr.on('data', (data) => {
-            if (!prefixPrinted) {
-                console.log(`Script ${stopScript} produced stderr:`);
-                prefixPrinted = true;
-            }
-            console.log(data.toString()); // Log any warnings from stderr
-        });
-
-        process.on('close', (code) => {
-            console.log(`Process to execute ${stopScript} exited with code ${code}`); // Log exit code
-        });
-
-        process.on('error', (err) => {
-            console.log(`Failed to execute ${stopScript}: ${err}`); // Log error if execution fails
-        });
-    });
     // Clear the restore list
     restoreProxySettings = [];
 });

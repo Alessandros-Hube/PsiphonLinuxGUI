@@ -3,8 +3,10 @@ const path = require('path');
 const os = require('os');
 
 const appConfigPath = path.join(__dirname, 'configs', 'browser.config');
-const userConfigDir = path.join(os.homedir(), '.config', 'PsiphonLinuxGUI');
+const appPsiphonConfigPath = path.join(__dirname, 'configs', 'psiphon.config');
+const userConfigDir = path.join(os.homedir(), '.config', 'psiphonlinuxgui');
 const userConfigPath = path.join(userConfigDir, 'browser.config');
+const userPsiphonConfigPath = path.join(userConfigDir, 'psiphon.config');
 
 // Create the user browser config
 function ensureUserBrowserConfig() {
@@ -36,8 +38,44 @@ function createBrowserList(browserList, createBrowserListItem) {
     }
 }
 
+// Create the user psiphon config
+function ensureUserPsiphonConfig() {
+    // Create user config folder if it does not exist
+    if (!fs.existsSync(userConfigDir)) {
+        fs.mkdirSync(userConfigDir, { recursive: true });
+    }
+
+    // User config does not exist - copy from default
+    if (!fs.existsSync(userPsiphonConfigPath)) {
+        const defaultConfig = fs.readFileSync(appPsiphonConfigPath, 'utf-8');
+        fs.writeFileSync(userPsiphonConfigPath, defaultConfig, 'utf-8');
+        console.log('User psiphon.config created from default');
+    }
+
+    return userPsiphonConfigPath;
+}
+
+// Create the psiphon config
+function createPsiphonConfig(country) {
+    try {
+        const configFile = ensureUserPsiphonConfig();
+        const fileContent = fs.readFileSync(configFile, 'utf-8');
+        const configJson = JSON.parse(fileContent);
+
+        configJson.EgressRegion = country;
+
+        const newConfig = JSON.stringify(configJson, null, 2);
+
+        fs.writeFileSync(configFile, newConfig, 'utf-8');
+    } catch (e) {
+        // Display an alert in case of an error
+        alert('Failed to save the file! Error: ' + e.message);
+    }
+}
+
 module.exports = {
     createBrowserList,
+    createPsiphonConfig,
     appConfigPath,
     userConfigPath,
 };
