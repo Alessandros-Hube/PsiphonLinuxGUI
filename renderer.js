@@ -2,9 +2,6 @@
 const { ipcRenderer } = require('electron');
 const { createBrowserList, createPsiphonConfig } = require('./util');
 
-const http = require('http');
-const net = require('net');
-
 // Define the states the application can be in
 const states = ['STOPPED', 'STARTING', 'STARTED'];
 
@@ -17,6 +14,8 @@ let changeProxySettings = [];
 // Track the current state of the application and proxy changes
 let currentStateIndex = 0;
 let isProxySettingsChanging = false;
+let isProxyServerRunning = false;
+let proxyStartTimeout;
 
 // Function to move to the next state in the application
 function nextState() {
@@ -27,6 +26,7 @@ function nextState() {
             ipcRenderer.send('shutdown'); // Notify main process to stop
             ipcRenderer.send('restore-settings'); // Restore original settings
             isProxySettingsChanging = false; // Reset flag
+            clearTimeout(proxyStartTimeout); // Clear any existing timeouts
             break;
         case 1: // STARTING state
             const country = document.getElementById('customSelect').getAttribute("data-value"); // Get selected country
@@ -36,32 +36,21 @@ function nextState() {
             createPsiphonConfig(country); // Create config based on the selected country
             ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
 
-            // Check if the HTTP and SOCKS proxies are available
-            if (checkProxyAvailable('http', 'localhost', 8081)
-                .then((isAvailable) => {
-                    console.log(`HTTP proxy server is ${isAvailable ? 'available' : 'not available'}.`);
-                })
-                .catch((err) => {
-                    console.error('Error checking HTTP proxy server:', err);
-                }) && checkProxyAvailable('socks', 'localhost', 1081)
-                    .then((isAvailable) => {
-                        console.log(`SOCKS proxy server is ${isAvailable ? 'available' : 'not available'}.`);
-                    })
-                    .catch((err) => {
-                        console.error('Error checking SOCKS proxy server:', err);
-                    })) {
-                setTimeout(() => {
-                    nextState(); // Proceed to next state after delay if conditions are met
-                }, 1000);
-            } else {
-                currentStateIndex = -1; // Reset to initial state on failure
-                nextState();
-            }
+            isProxySettingsChanging = true;
+
+            proxyStartTimeout = setTimeout(() => {
+                if (!isProxyServerRunning) {
+                    showProxyWarning();
+                }
+            }, 10000);
             break;
         case 2: // STARTED state
             if (!isProxySettingsChanging) {
                 ipcRenderer.send('change-proxy-setting', changeProxySettings); // Apply new proxy settings
                 isProxySettingsChanging = true; // Set flag
+            }
+            if (!isProxyServerRunning) {
+                nextState();
             }
             break;
         default:
@@ -70,6 +59,7 @@ function nextState() {
     updateStateDisplay(); // Update UI at the end
     updateButton(); // Update button label
     updateIcon(); // Update icon
+    hideProxyWarning(); // Hide any proxy warnings
 }
 
 // Listener for handling proxy setting errors
@@ -98,6 +88,39 @@ ipcRenderer.on('server-error', (event, err) => {
     alert(`Failed to execute psiphon-tunnel-core-x86_64. The file is not executable. ${err.toString()}`);
 });
 
+// Listener for handling proxy watch responses
+ipcRenderer.on('proxy-watch', (event, response) => {
+    const res = response.toString();
+    if (res === "HTTP:OK" && !isProxyServerRunning) {
+        clearTimeout(proxyStartTimeout);
+        isProxyServerRunning = true;
+        isProxySettingsChanging = false;
+        nextState();
+    } else if (res != "HTTP:OK" && isProxyServerRunning && currentStateIndex != 0) {
+        isProxyServerRunning = false;
+        currentStateIndex = 0;
+        nextState();
+    }
+    document.getElementById('proxyWarning').innerHTML = res === "HTTP:DOWN" ? "The server from the selected country is currently unavailable." : "The device network is down. Please check your internet connection.";
+});
+
+// Function to show the proxy warning
+function showProxyWarning() {
+    const warning = document.getElementById("proxyWarning");
+    if (warning) {
+        warning.classList.remove("hidden");
+        ipcRenderer.send('set-attention'); // Notify main process to set attention
+    }
+}
+
+// Function to hide the proxy warning
+function hideProxyWarning() {
+    const warning = document.getElementById("proxyWarning");
+    if (warning) {
+        warning.classList.add("hidden");
+    }
+}
+
 
 if (localStorage.getItem("country") == "true") {
     document.querySelectorAll('#customOptions div').forEach((option) => {
@@ -113,89 +136,12 @@ if (localStorage.getItem("country") == "true") {
 
 // Function to change the country setting and reset the state if needed
 function changeCountry() {
-    if (currentStateIndex == 2) {
+    if (currentStateIndex == 1 || currentStateIndex == 2) {
         currentStateIndex = 0; // Reset state to STOPPED
         ipcRenderer.send('shutdown'); // Notify main process to stop
+        updateIcon(); // Update icon
         nextState(); // Proceed to next state
     }
-}
-
-// Function to check if a proxy is available
-function checkProxyAvailable(proxyType, proxyHost, proxyPort, retryInterval = 1000, maxAttempts = 5) {
-    return new Promise((resolve, reject) => {
-        let attempts = 0;
-
-        const tryConnect = () => {
-            attempts++;
-
-            if (proxyType === 'http') {
-                const options = {
-                    host: proxyHost,
-                    port: proxyPort,
-                    method: 'CONNECT',
-                    path: 'www.example.com:80', // Standard HTTP path for connection testing
-                };
-
-                const req = http.request(options);
-
-                req.on('connect', (res, socket, head) => {
-                    resolve(true); // Connection successful
-                    socket.destroy(); // Close the socket
-                });
-
-                req.on('error', (err) => {
-                    if (attempts < maxAttempts) {
-                        setTimeout(tryConnect, retryInterval); // Retry connection
-                    } else {
-                        resolve(false); // Failed after max attempts
-                    }
-                });
-
-                req.on('timeout', () => {
-                    req.abort(); // Abort the request on timeout
-                    if (attempts < maxAttempts) {
-                        setTimeout(tryConnect, retryInterval);
-                    } else {
-                        resolve(false); // Failed after max attempts
-                    }
-                });
-
-                req.setTimeout(retryInterval); // Set timeout for request
-                req.end(); // End the request
-
-            } else if (proxyType === 'socks') {
-                const client = new net.Socket();
-
-                client.connect(proxyPort, proxyHost, () => {
-                    resolve(true); // Connection successful
-                    client.destroy(); // Close the client
-                });
-
-                client.on('error', (err) => {
-                    if (attempts < maxAttempts) {
-                        setTimeout(tryConnect, retryInterval); // Retry connection
-                    } else {
-                        resolve(false); // Failed after max attempts
-                    }
-                });
-
-                client.on('timeout', () => {
-                    client.destroy(); // Close the client on timeout
-                    if (attempts < maxAttempts) {
-                        setTimeout(tryConnect, retryInterval);
-                    } else {
-                        resolve(false); // Failed after max attempts
-                    }
-                });
-
-                client.setTimeout(retryInterval); // Set timeout for client
-            } else {
-                reject(new Error('Invalid proxy type. Use "http" or "socks".'));
-            }
-        };
-
-        tryConnect(); // Initiate connection attempt
-    });
 }
 
 // Function to update the display of the current state in the UI
@@ -226,7 +172,7 @@ function updateButton() {
 
 // Function to update the icon
 function updateIcon() {
-    if (currentStateIndex == 0) {
+    if (currentStateIndex != 2) {
         document.getElementById('icon').setAttribute("src", "./images/psiphonlinuxgui-off.png");
     } else if (currentStateIndex == 2) {
         document.getElementById('icon').setAttribute("src", "./images/psiphonlinuxgui.png");

@@ -202,6 +202,20 @@ body.dark {
     background-color: #c9302c;
 }
 
+.warning {
+    color: #fff;
+    background: #c0392b;
+    padding: 12px;
+    border-radius: 6px;
+    margin: 20px auto;
+    margin-top: 4vh;
+    width: max-content;
+}
+
+.hidden {
+    display: none;
+}
+
 .sidebar {
     float: left;
     width: 29%;

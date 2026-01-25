@@ -10,6 +10,7 @@ const corePath = path.join(__dirname, 'psiphon-tunnel-core-x86_64');
 const imagePath = path.join(__dirname, 'images');
 const scriptPath = path.join(__dirname, 'scripts');
 const psiphonPath = path.join(__dirname, 'psiphon.sh');
+const proxyWatch = path.join(__dirname, 'proxy-watch.sh');
 
 let restoreProxySettings = [];
 
@@ -109,7 +110,7 @@ function getScript(name, scriptType) {
 }
 
 // Function to run a process with given command and arguments
-function runProcess({ command, args = [], label = '', onStdErr, onError, event }) {
+function runProcess({ command, args = [], label = '', onStdOut, onStdErr, onError, event }) {
     const process = spawn(command, args);
 
     let stdoutPrinted = false;
@@ -120,7 +121,11 @@ function runProcess({ command, args = [], label = '', onStdErr, onError, event }
             console.log(`Executed ${label}:`);
             stdoutPrinted = true;
         }
-        console.log(data.toString());
+
+        const msg = data.toString();
+        console.log(msg);
+
+        if (onStdOut) onStdOut(msg, event);
     });
 
     process.stderr.on('data', data => {
@@ -185,12 +190,34 @@ function executeStartStopScript(command, args, event) {
     });
 }
 
+// Function to execute the proxy watch script
+function executeProxyWatchScript(event) {
+    runProcess({
+        command: 'bash',
+        args: [proxyWatch],
+        label: 'Proxy Watcher',
+        event,
+        onStdOut: (msg, event) => {
+            if (event && msg.includes('HTTP:OK') && msg.includes('DEVICE:OK')) {
+                // Send a message back to the renderer process if the process started
+                event.reply('proxy-watch', "HTTP:OK");
+            } else if (event && msg.includes('HTTP:DOWN') && msg.includes('DEVICE:OK')) {
+                // Send a message back to the renderer process if the process stopped
+                event.reply('proxy-watch', "HTTP:DOWN");
+            } else if (event && msg.includes('DEVICE:DOWN')) {
+                // Send a message back to the renderer process if the device network is down
+                event.reply('proxy-watch', "DEVICE:DOWN");
+            }
+        }
+    });
+}
+
 // Event listener for the process exit event
 process.on('exit', () => {
     // Iterate through the list of proxy settings to restore
     restoreProxySettings.forEach(restoreProxySetting => {
         // Execute a command to kill the psiphon-tunnel-core process synchronously
-        executeStartStopScript(psiphonPath, ['stop'], null)
+        executeStartStopScript(psiphonPath, ['stop'], null);
 
         let stopScript = getScript(restoreProxySetting, "stopScript");
 
@@ -207,7 +234,7 @@ process.on('exit', () => {
     });
 
     // Execute a command to kill the psiphon-tunnel-core process synchronously
-    executeStartStopScript(psiphonPath, ['stop'], null)
+    executeStartStopScript(psiphonPath, ['stop'], null);
 });
 
 // Listener for debug logging
@@ -226,13 +253,16 @@ ipcMain.on('open-settings-page', () => {
 // Listener for starting the VPN/proxy server
 ipcMain.on('start-vpn-proxy-server', (event) => {
     // Execute a command to start the psiphon-tunnel-core with a specific configuration
-    executeStartStopScript(psiphonPath, ['start', `${corePath}`], event)
+    executeStartStopScript(psiphonPath, ['start', `${corePath}`], event);
+
+    // Start the proxy watch script to monitor the connection status
+    executeProxyWatchScript(event);
 });
 
 // Listener for shutting down the VPN/proxy server
 ipcMain.on('shutdown', () => {
     // Execute a command to kill the psiphon-tunnel-core process synchronously
-    executeStartStopScript(psiphonPath, ['stop'], null)
+    executeStartStopScript(psiphonPath, ['stop'], null);
 });
 
 // Listener for changing proxy settings
@@ -280,6 +310,13 @@ ipcMain.on('theme-updated', () => {
     if (mainWindow) {
         mainWindow.webContents.send('refresh-theme');
     }
+});
+
+// Listener to set attention to the app window
+ipcMain.on('set-attention', () => {
+    if (!mainWindow) return;
+
+    mainWindow.flashFrame(true);
 });
 
 // Handler for an invoke the version number of the app
