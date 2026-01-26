@@ -1,9 +1,6 @@
 services:
   electron-builder:
-    image: electronuserland/builder:latest
+    build: .
     container_name: psiphon-electron-builder
-    working_dir: /app
     volumes:
-      - .:/app
       - ./dist:/app/dist
-    command: npm run build
