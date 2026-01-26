@@ -2,8 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const appConfigPath = path.join(__dirname, 'configs', 'browser.config');
-const appPsiphonConfigPath = path.join(__dirname, 'configs', 'psiphon.config');
+const assetsDir = path.join(__dirname, 'assets');
+const iconsDir = path.join(assetsDir, 'icons');
+const imagesDir = path.join(assetsDir, 'images');
+
+const appConfigDir = path.join(__dirname, 'configs');
+const appConfigPath = path.join(appConfigDir, 'browser.config');
+const appPsiphonConfigPath = path.join(appConfigDir, 'psiphon.config');
+
 const userConfigDir = path.join(os.homedir(), '.config', 'psiphonlinuxgui');
 const userConfigPath = path.join(userConfigDir, 'browser.config');
 const userPsiphonConfigPath = path.join(userConfigDir, 'psiphon.config');
@@ -77,5 +83,7 @@ module.exports = {
     createBrowserList,
     createPsiphonConfig,
     appConfigPath,
+    iconsDir,
+    imagesDir,
     userConfigPath,
 };

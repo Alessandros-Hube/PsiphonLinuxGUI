@@ -3,14 +3,16 @@ const { app, BrowserWindow, shell } = require('electron')
 const path = require('node:path')
 const { execSync, spawn } = require('child_process');
 const { ipcMain } = require('electron');
-const { userConfigPath } = require('./util');
+const { iconsDir, userConfigPath } = require('./util');
 const fs = require('fs');
 
-const corePath = path.join(__dirname, 'psiphon-tunnel-core-x86_64');
-const imagePath = path.join(__dirname, 'images');
-const scriptPath = path.join(__dirname, 'scripts');
-const psiphonPath = path.join(__dirname, 'psiphon.sh');
-const proxyWatch = path.join(__dirname, 'proxy-watch.sh');
+
+const scriptPath = path.join(__dirname, '../scripts');
+
+const appBackendDir = path.join(__dirname, 'backend');
+const psiphonPath = path.join(appBackendDir, 'psiphon.sh');
+const corePath = path.join(appBackendDir, 'psiphon-tunnel-core-x86_64');
+const proxyWatch = path.join(appBackendDir, 'proxy-watch.sh');
 
 let restoreProxySettings = [];
 
@@ -24,7 +26,7 @@ const createWindow = () => {
         minHeight: 800,
         width: 1080,
         height: 800,
-        icon: `${imagePath}/psiphonlinuxgui.png`,
+        icon: `${iconsDir}/psiphonlinuxgui.png`,
         autoHideMenuBar: true,
         webPreferences: {
             nodeIntegration: true,
@@ -33,7 +35,7 @@ const createWindow = () => {
     })
 
     // and load the index.html of the app.
-    mainWindow.loadFile('index.html')
+    mainWindow.loadFile('src/renderer/main/index.html')
 
     // Open the DevTools.
     // mainWindow.webContents.openDevTools()
@@ -66,10 +68,16 @@ function createSettingsWindow() {
     });
 
     // and load the settings.html of the app.
-    childWindow.loadFile('settings.html');
+    childWindow.loadFile('src/renderer/settings/settings.html');
 
     // Open the DevTools.
     // childWindow.webContents.openDevTools();
+
+    // Event handler for new windows
+    childWindow.webContents.setWindowOpenHandler(({ url }) => {
+        shell.openExternal(url);
+        return { action: 'deny' };
+    });
 }
 
 // This method will be called when Electron has finished
@@ -252,11 +260,11 @@ ipcMain.on('open-settings-page', () => {
 
 // Listener for starting the VPN/proxy server
 ipcMain.on('start-vpn-proxy-server', (event) => {
-    // Execute a command to start the psiphon-tunnel-core with a specific configuration
-    executeStartStopScript(psiphonPath, ['start', `${corePath}`], event);
-
     // Start the proxy watch script to monitor the connection status
     executeProxyWatchScript(event);
+
+    // Execute a command to start the psiphon-tunnel-core with a specific configuration
+    executeStartStopScript(psiphonPath, ['start', `${corePath}`], event);
 });
 
 // Listener for shutting down the VPN/proxy server

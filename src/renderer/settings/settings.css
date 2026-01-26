@@ -354,7 +354,7 @@ input:checked+.slider:before {
 
 .radio-option {
     font-size: 13px;
-    color: #ccc;
+    color: light-dark(#555, #ccc);
 }
 
 
@@ -405,7 +405,7 @@ input:checked+.slider:before {
 .script-hint {
     margin-top: 6px;
     font-size: 12px;
-    color: #aaaaaa;
+    color: light-dark(#555, #ccc);
     line-height: 1.4;
 }
 

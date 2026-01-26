@@ -1,5 +1,5 @@
 const { ipcRenderer, shell } = require('electron');
-const { createBrowserList, appConfigPath, userConfigPath } = require('./util');
+const { createBrowserList, appConfigPath, userConfigPath } = require('../../util');
 
 const fs = require('fs');
 
@@ -237,11 +237,3 @@ function validateCreateForm() {
 modal.querySelectorAll('input').forEach(input => {
     input.addEventListener('input', validateCreateForm);
 });
-
-
-document
-    .getElementById('open-scripts-folder')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        shell.openPath('/opt/psiphonlinuxgui/resources/app/scripts/');
-    });

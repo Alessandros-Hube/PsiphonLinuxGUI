@@ -1,6 +1,6 @@
 // Import required modules from Electron and Node.js
 const { ipcRenderer } = require('electron');
-const { createBrowserList, createPsiphonConfig } = require('./util');
+const { createBrowserList, createPsiphonConfig, iconsDir, imagesDir } = require('../../util');
 
 // Define the states the application can be in
 const states = ['STOPPED', 'STARTING', 'STARTED'];
@@ -151,7 +151,7 @@ function updateStateDisplay() {
     currentStateElement.style.color = (states[currentStateIndex] == "STARTED" ? "#229b40" : (states[currentStateIndex] == "STARTING" ? "#e9a442" : "#902232"));
 
     const currentStateIconElement = document.getElementById('currentStateIcon');
-    const currentStateIcon = "./images/" + states[currentStateIndex] + (states[currentStateIndex] == "STARTING" ? ".gif" : ".png");
+    const currentStateIcon = `${imagesDir}/` + states[currentStateIndex] + (states[currentStateIndex] == "STARTING" ? ".gif" : ".png");
     currentStateIconElement.setAttribute("src", currentStateIcon); // Set corresponding icon
 }
 
@@ -173,9 +173,9 @@ function updateButton() {
 // Function to update the icon
 function updateIcon() {
     if (currentStateIndex != 2) {
-        document.getElementById('icon').setAttribute("src", "./images/psiphonlinuxgui-off.png");
+        document.getElementById('icon').setAttribute("src", `${iconsDir}/psiphonlinuxgui-off.png`);
     } else if (currentStateIndex == 2) {
-        document.getElementById('icon').setAttribute("src", "./images/psiphonlinuxgui.png");
+        document.getElementById('icon').setAttribute("src", `${iconsDir}/psiphonlinuxgui.png`);
     }
 }
 

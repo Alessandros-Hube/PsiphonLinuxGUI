@@ -1,7 +1,7 @@
 {
   "name": "psiphonlinuxgui",
   "version": "1.2.0",
-  "main": "main.js",
+  "main": "src/main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder"
@@ -30,7 +30,7 @@
         "rpm"
       ],
       "category": "Utility",
-      "icon": "./images/psiphonlinuxgui.png",
+      "icon": "./src/assets/icons/psiphonlinuxgui.png",
       "executableName": "psiphonlinuxgui",
       "desktop": {
         "Name": "Psiphon Proxy Server",
