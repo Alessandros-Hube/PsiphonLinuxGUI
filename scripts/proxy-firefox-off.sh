@@ -37,6 +37,18 @@ for PROFILE_DIR in $PROFILE_DIRS; do
     fi
 done
 
+# Find standard installation 2
+PROFILE_DIRS2=$(find ~/.config/mozilla/firefox/ -name "*.default-release*")
+for PROFILE_DIR in $PROFILE_DIRS2; do
+    USER_JS_FILE="$PROFILE_DIR/user.js"
+    if [ -f "$USER_JS_FILE" ]; then
+        echo "Set proxy settings to default in $USER_JS_FILE"
+        write_standard_user_js "$USER_JS_FILE"
+    else
+        echo "No user.js file found in $PROFILE_DIR"
+    fi
+done
+
 # Find snap installation
 SNAP_PROFILE_DIRS=$(find ~/snap/firefox/common/.mozilla/firefox/ -name "*.default*")
 for SNAP_PROFILE_DIR in $SNAP_PROFILE_DIRS; do
