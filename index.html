@@ -16,9 +16,11 @@
             <img id="icon" src="./images/psiphonlinuxgui.png" alt="Psiphon Logo">
 
             <div>
-                <div class="fa" id="settingsBtn">
-                    <span class="fa-solid fa-gear"></span>
-                </div>
+                <select class="fa" id="themeSelector">
+                    <option class="fa fa-adjust">&#xf042; &nbsp; Auto</option>
+                    <option class="fa fa-sun">&#xf185; &nbsp; Light</option>
+                    <option class="fa fa-moon">&#xf186; &nbsp; Dark</option>
+                </select>
 
                 <a href="#" class="notification" id="notifyBtn">
                     <span class="fa-regular fa-bell"></span>
@@ -56,7 +58,6 @@
                 <img id="currentStateIcon" style="width: 37vh; height: 37vh;">
                 <h1>PSIPHON PROXY SERVER IS <span id="currentState">Idle</span></h1>
                 <button class="disconnect-btn" id="nextStateButton"><span id="Button">CONNECT</span></button>
-                <div id="proxyWarning" class="warning hidden"> </div>
             </div>
 
             <div class="footer">
@@ -76,9 +77,9 @@
                         <div data-value="CZ"><span class="fi fi-cz"></span> Czech Republic</div>
                         <div data-value="DE"><span class="fi fi-de"></span> Germany</div>
                         <div data-value="DK"><span class="fi fi-dk"></span> Denmark</div>
-                        <div data-value="EE"><span class="fi fi-ee"></span> Estonia</div>
+                        <div style="display: none;" data-value="EE"><span class="fi fi-ee"></span> Estonia</div>
                         <div data-value="ES"><span class="fi fi-es"></span> Spain</div>
-                        <div data-value="FI"><span class="fi fi-fi"></span> Finland</div>
+                        <div style="display: none;" data-value="FI"><span class="fi fi-fi"></span> Finland</div>
                         <div data-value="FR"><span class="fi fi-fr"></span> France</div>
                         <div data-value="GB"><span class="fi fi-gb"></span> United Kingdom</div>
                         <div data-value="HU"><span class="fi fi-hu"></span> Hungary</div>
@@ -86,7 +87,7 @@
                         <div data-value="IN"><span class="fi fi-in"></span> India</div>
                         <div data-value="IT"><span class="fi fi-it"></span> Italy</div>
                         <div data-value="JP"><span class="fi fi-jp"></span> Japan</div>
-                        <div data-value="LV"><span class="fi fi-lv"></span> Latvia</div>
+                        <div style="display: none;" data-value="LV"><span class="fi fi-lv"></span> Latvia</div>
                         <div data-value="NL"><span class="fi fi-nl"></span> Netherlands</div>
                         <div data-value="NO"><span class="fi fi-no"></span> Norway</div>
                         <div data-value="PL"><span class="fi fi-pl"></span> Poland</div>
@@ -95,7 +96,7 @@
                         <div data-value="SE"><span class="fi fi-se"></span> Sweden</div>
                         <div data-value="SG"><span class="fi fi-sg"></span> Singapore</div>
                         <div data-value="SK"><span class="fi fi-sk"></span> Slovakia</div>
-                        <div data-value="UA"><span class="fi fi-ua"></span> Ukraine</div>
+                        <div style="display: none;" data-value="UA"><span class="fi fi-ua"></span> Ukraine</div>
                         <div data-value="US"><span class="fi fi-us"></span> United States</div>
                     </div>
                     <div class="custom-select" id="customSelect" data-value="">

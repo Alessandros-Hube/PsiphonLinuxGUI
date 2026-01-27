@@ -28,14 +28,11 @@ fi
 
 # Search Firefox Installation
 PROFILE_DIR=$(find ~/.mozilla/firefox/ -name "*.default-release*" 2>/dev/null)
-PROFILE_DIR2=$(find ~/.config/mozilla/firefox/ -name "*.default-release*" 2>/dev/null)
 SNAP_PROFILE_DIR=$(find ~/snap/firefox/common/.mozilla/firefox/ -name "*.default*" 2>/dev/null)
 FLATPAK_PROFILE_DIR=$(find ~/.var/app/org.mozilla.firefox/.mozilla/firefox/ -name "*.default-release*" 2>/dev/null)
 
 if [ -n "$PROFILE_DIR" ]; then
     write_user_js "$PROFILE_DIR"
-elif [ -n "$PROFILE_DIR2" ]; then
-    write_user_js "$PROFILE_DIR2"
 elif [ -n "$SNAP_PROFILE_DIR" ]; then
     write_user_js "$SNAP_PROFILE_DIR"
 elif [ -n "$FLATPAK_PROFILE_DIR" ]; then
