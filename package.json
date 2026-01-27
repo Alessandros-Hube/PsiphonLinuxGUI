@@ -18,8 +18,8 @@
   "license": "MIT",
   "description": "PsiphonLinuxGUI is an unofficial Linux app for managing the Psiphon proxy server and browser settings.",
   "devDependencies": {
-    "electron": "^40.0.0",
-    "electron-builder": "^26.5.0"
+    "electron": "^30.0.9",
+    "electron-builder": "^25.1.8"
   },
   "build": {
     "asar": false,
