@@ -49,7 +49,7 @@ body.dark {
     height: 50px;
 }
 
-#settingsBtn {
+#themeSelector {
     font-size: 1rem;
     padding: 0.4rem 0.75rem;
     margin: 1rem;
@@ -61,7 +61,7 @@ body.dark {
     cursor: pointer;
 }
 
-#settingsBtn:hover {
+#themeSelector:hover {
     border-color: #666;
 }
 
@@ -200,20 +200,6 @@ body.dark {
 
 .disconnect-btn:hover {
     background-color: #c9302c;
-}
-
-.warning {
-    color: #fff;
-    background: #c0392b;
-    padding: 12px;
-    border-radius: 6px;
-    margin: 20px auto;
-    margin-top: 4vh;
-    width: max-content;
-}
-
-.hidden {
-    display: none;
 }
 
 .sidebar {
