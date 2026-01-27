@@ -30,11 +30,6 @@ jobs:
         if: always()
         run: docker compose down -v
 
-      - name: Create git tag
-        run: |
-          git tag ${{ steps.version.outputs.tag }}
-          git push origin ${{ steps.version.outputs.tag }}
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
