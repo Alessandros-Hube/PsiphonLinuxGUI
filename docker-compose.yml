@@ -1,0 +1,6 @@
+services:
+  electron-builder:
+    build: .
+    container_name: psiphon-electron-builder
+    volumes:
+      - ./dist:/app/dist

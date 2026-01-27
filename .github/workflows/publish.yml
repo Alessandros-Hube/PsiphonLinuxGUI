@@ -1,0 +1,78 @@
+name: Publish Release
+
+on:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from package.json
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build with Docker Compose
+        run: |
+          docker compose up --build --abort-on-container-exit
+
+      - name: Cleanup Docker
+        if: always()
+        run: docker compose down -v
+
+      - name: Check if tag exists
+        id: tag_check
+        run: |
+          if git ls-remote --tags origin | grep -q "refs/tags/${{ steps.version.outputs.tag }}$"; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Create Git tag (main only)
+        if: github.ref_name == 'main' && steps.tag_check.outputs.exists == 'false'
+        run: |
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin ${{ steps.version.outputs.tag }}
+
+      - name: Create GitHub Release
+        if: github.ref_name == 'main' && steps.tag_check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
+          prerelease: false
+          make_latest: true
+          files: |
+            dist/*.deb
+            dist/*.rpm
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pre-Release (develop)
+        if: github.ref_name == 'develop'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: develop
+          name: Develop Pre-Release
+          prerelease: true
+          make_latest: false
+          files: |
+            dist/*.deb
+            dist/*.rpm
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+
+
