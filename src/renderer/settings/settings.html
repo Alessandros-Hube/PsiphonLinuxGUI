@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="settings.css" />
+    <title>Setting</title>
+</head>
+
+<body>
+    <div class="settings-wrapper">
+
+        <!-- SIDEBAR -->
+        <div class="setting-sidebar">
+            <div class="setting-sidebar-item active" data-page="general">
+                General
+            </div>
+            <div class="setting-sidebar-item" data-page="browser-list">
+                Edit Browser list
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+
+            <!-- GENERAL PAGE -->
+            <div class="page active" id="general">
+
+                <div class="toggle-container">
+                    <div class="toggle-text">Remember the last used browser script:</div>
+                    <label class="switch">
+                        <input type="checkbox" id="browserScrips">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-container">
+                    <div class="toggle-text">Remember the last used country:</div>
+                    <label class="switch">
+                        <input type="checkbox" id="country">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-container">
+                    <div class="toggle-text">Theme:</div>
+
+                    <select class="fa" id="themeSelector">
+                        <option class="fa fa-adjust">&#xf042; &nbsp; Auto</option>
+                        <option class="fa fa-sun">&#xf185; &nbsp; Light</option>
+                        <option class="fa fa-moon">&#xf186; &nbsp; Dark</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <!-- EDITED BROWSERSLIST PAGE -->
+            <div class="page" id="browser-list">
+                <div class="settings-actions">
+                    <button class="new-btn">New</button>
+                    <button class="reset-btn">Reset to default</button>
+                    <button class="save-btn" disabled>Save</button>
+                </div>
+                <div class="setting-browser-list">
+                </div>
+
+            </div>
+            <div class="modal hidden" id="new-browser-modal">
+                <div class="modal-content">
+
+                    <h3>Create new browser entry</h3>
+
+                    <div class="form-group">
+                        <label> Name </label>
+                        <input type="text" id="browser-name" placeholder="Firefox" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Icon</label>
+
+                        <div class="icon-selector">
+
+                            <div class="icon-preview-box">
+                                <span id="icon-preview-placeholder">Icon Preview</span>
+                                <span id="icon-preview"></span>
+                            </div>
+
+                            <div class="icon-inputs">
+
+                                <label class="radio-option">
+                                    <input type="radio" name="iconType" value="css" checked />
+                                    Use CSS Icon (FontAwesome)
+                                </label>
+
+                                <label class="radio-option">
+                                    <input type="radio" name="iconType" value="local" />
+                                    Use Local Icon
+                                </label>
+                                <input type="text" id="icon" placeholder="fab fa-firefox" />
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Add a script that changes the browser’s proxy settings</label>
+                        <input type="text" id="start-script" placeholder="/home/user/proxy-firefox-on.sh" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Add a script that restores the browser’s proxy settings</label>
+                        <input type="text" id="stop-script" placeholder="/home/user/proxy-firefox-off.sh" />
+                    </div>
+                    <div class="script-hint" id="script-hint">
+                        If the new browser is Firefox-based or Chromium-based,
+                        use the corresponding scripts from the default configuration
+                        as a reference. You can find them in the
+                        <a href="https://github.com/Alessandros-Hube/PsiphonLinuxGUI/tree/main/scripts"
+                            target="_blank">scripts</a> folder of the project repository.
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="cancel-btn">Cancel</button>
+                        <button class="create-btn" disabled>Create</button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebarItems = document.querySelectorAll('.setting-sidebar-item');
+            const pages = document.querySelectorAll('.page');
+
+            if (sidebarItems.length === 0 || pages.length === 0) {
+                console.error('Sidebar items or pages not found');
+                return;
+            }
+
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const target = item.getAttribute('data-page');
+
+                    // Set sidebar active
+                    sidebarItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+
+                    // Switch pages
+                    pages.forEach(page => {
+                        if (page.id == target) {
+                            page.classList.add('active');
+                        } else {
+                            page.classList.remove('active');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+    <script src="settings.js"></script>
+
+</body>
+
+</html>
