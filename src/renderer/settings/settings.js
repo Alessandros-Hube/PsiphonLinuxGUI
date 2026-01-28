@@ -1,7 +1,11 @@
-const { ipcRenderer, shell } = require('electron');
-const { createBrowserList, appConfigPath, userConfigPath } = require('../../util');
-
-const fs = require('fs');
+const { ipcRenderer } = require('electron');
+const {
+    createBrowserList,
+    getDefaultBrowserConfig,
+    getConfig,
+    getConfigPath,
+    writeFileSafe
+} = require('../../util');
 
 const modal = document.getElementById('new-browser-modal');
 const iconInput = document.getElementById('icon');
@@ -29,26 +33,31 @@ function setTheme(theme) {
 const savedTheme = localStorage.getItem("theme");
 setTheme(savedTheme);
 
-
+// Function to initialize the general settings checkboxes
 function initGeneral() {
     document.getElementById("browserScrips").checked = localStorage.getItem("browserScrips") == "true" ? true : false;
     document.getElementById("country").checked = localStorage.getItem("country") == "true" ? true : false;
 }
-
 initGeneral();
-
-
-// Initial call to add EventListener
-addEventListener();
 
 // Add event listeners to each checkbox for status checking
 function addEventListener() {
     ["browserScrips", "country"].forEach(key => {
         document.getElementById(key).addEventListener('click', () => {
             localStorage.setItem(key, document.getElementById(key).checked);
+            if (key === "country" && !document.getElementById(key).checked) {
+                localStorage.removeItem("latestCountry");
+            }
+            if (key === "browserScrips" && !document.getElementById(key).checked) {
+                const browserConfig = getConfig("browser.config");
+                browserConfig.forEach(browser => {
+                    localStorage.removeItem(browser.name);
+                });
+            }
         });
     });
 }
+addEventListener();
 
 // Drag & drop function 
 document.addEventListener('DOMContentLoaded', () => {
@@ -90,49 +99,52 @@ function saveBrowserList() {
             item => item.querySelector('.toggle-text').innerText.replace(':', '')
         );
 
-    try {
-        const fileContent = fs.readFileSync(userConfigPath, 'utf-8');
-        const browserConfig = JSON.parse(fileContent);
+    const browserConfig = getConfig("browser.config");
 
-        const browserMap = new Map(
-            browserConfig.map(browser => [browser.name, browser])
-        );
-
-        const newConfig = order
-            .filter(name => browserMap.has(name))
-            .map(name => browserMap.get(name));
-
-        if (newConfig.length !== browserConfig.length) {
-            console.warn('Config length mismatch after reordering');
+    browserConfig.forEach(browser => {
+        if (localStorage.getItem("browserScrips") == "true") {
+            localStorage.removeItem(browser.name);
         }
+    });
 
-        fs.writeFileSync(userConfigPath, JSON.stringify(newConfig, null, 2), 'utf-8');
-        console.log('Browser config reordered and saved');
+    const browserMap = new Map(
+        browserConfig.map(browser => [browser.name, browser])
+    );
 
-        ipcRenderer.send('browser-list-updated');
-        document.querySelector('.save-btn').disabled = true;
-    } catch (e) {
-        console.error('Failed to save browser order:', e);
+    const newConfig = order
+        .filter(name => browserMap.has(name))
+        .map(name => browserMap.get(name));
+
+    if (newConfig.length !== browserConfig.length) {
+        console.warn('Config length mismatch after reordering');
     }
+
+    writeFileSafe(getConfigPath('browser.config'), JSON.stringify(newConfig, null, 2), 'utf-8');
+    console.log('Browser config reordered and saved');
+
+    ipcRenderer.send('browser-list-updated');
+    document.querySelector('.save-btn').disabled = true;
 }
 document.querySelector('.save-btn').addEventListener('click', saveBrowserList);
 
 // Function to reset the browser list
 function resetBrowserList() {
     const browserList = document.querySelector('.setting-browser-list');
-    try {
-        const defaultConfig = fs.readFileSync(appConfigPath, 'utf-8');
-        const browserConfig = JSON.parse(defaultConfig);
 
-        browserList.innerHTML = createBrowserListItem(browserConfig);
+    const browserConfig = getDefaultBrowserConfig();
 
-        fs.writeFileSync(userConfigPath, JSON.stringify(browserConfig, null, 2), 'utf-8');
+    browserConfig.forEach(browser => {
+        if (localStorage.getItem("browserScrips") == "true") {
+            localStorage.removeItem(browser.name);
+        }
+    });
 
-        ipcRenderer.send('browser-list-updated');
-        document.querySelector('.save-btn').disabled = true;
-    } catch (e) {
-        browserList.innerHTML = "An error occurred while loading the browser configuration.<br><br>" + e.message;
-    }
+    browserList.innerHTML = createBrowserListItem(browserConfig);
+
+    writeFileSafe(getConfigPath('browser.config'), JSON.stringify(browserConfig, null, 2), 'utf-8');
+
+    ipcRenderer.send('browser-list-updated');
+    document.querySelector('.save-btn').disabled = true;
 }
 document.querySelector('.reset-btn').addEventListener('click', resetBrowserList);
 
@@ -143,6 +155,10 @@ document.querySelector('.setting-browser-list').addEventListener('click', (e) =>
 
     const item = removeBtn.closest('.browser-item');
     if (!item) return;
+
+    if (localStorage.getItem("browserScrips") == "true") {
+        localStorage.removeItem(item.querySelector('.toggle-text').innerText);
+    }
 
     item.remove();
 
@@ -202,21 +218,16 @@ function createNewBrowserEntry() {
         stopScript: document.getElementById('stop-script').value
     };
 
-    try {
-        const fileContent = fs.readFileSync(userConfigPath, 'utf-8');
-        const browserConfig = JSON.parse(fileContent);
+    const browserConfig = getConfig("browser.config");
 
-        browserConfig.push(entry)
-        fs.writeFileSync(userConfigPath, JSON.stringify(browserConfig, null, 2), 'utf-8');
+    browserConfig.push(entry)
+    writeFileSafe(getConfigPath('browser.config'), JSON.stringify(browserConfig, null, 2), 'utf-8');
 
-        createBrowserList(document.querySelector('.setting-browser-list'), createBrowserListItem);
+    createBrowserList(document.querySelector('.setting-browser-list'), createBrowserListItem);
 
-        ipcRenderer.send('browser-list-updated');
+    ipcRenderer.send('browser-list-updated');
 
-        modal.classList.add('hidden');
-    } catch (e) {
-        console.log("Failed to create a new entry: " + e.message);
-    }
+    modal.classList.add('hidden');
 }
 modal.querySelector('.create-btn').addEventListener('click', createNewBrowserEntry);
 
@@ -237,3 +248,14 @@ function validateCreateForm() {
 modal.querySelectorAll('input').forEach(input => {
     input.addEventListener('input', validateCreateForm);
 });
+
+// Disable settings if not in STOPPED state
+if (localStorage.getItem("currentStateIndex") != 0) {
+    document.querySelector(".proxy-hint").classList.add("is-visible");
+    document.querySelector(".setting-browser-list").style.height = "450px";
+    document.querySelector(".new-btn").disabled = true;
+    document.querySelector(".reset-btn").disabled = true;
+    document.querySelector(".save-btn").disabled = true;
+    document.querySelectorAll(".remove-btn").forEach(btn => btn.disabled = true);
+    document.querySelectorAll(".drag-handle").forEach(handle => handle.style.display = "none");
+}

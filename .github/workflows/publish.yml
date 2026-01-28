@@ -2,7 +2,13 @@ name: Publish Release
 
 on:
   push:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
 permissions:
   contents: write
@@ -64,7 +70,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: develop
-          name: Develop Pre-Release
+          name: Pre-Release ${{ steps.version.outputs.tag }}
           prerelease: true
           make_latest: false
           files: |

@@ -17,9 +17,13 @@ let isProxySettingsChanging = false;
 let isProxyServerRunning = false;
 let proxyStartTimeout;
 
+localStorage.setItem("currentStateIndex", currentStateIndex); // Save initial state to localStorage
+
 // Function to move to the next state in the application
 function nextState() {
     currentStateIndex = (currentStateIndex + 1) % states.length; // Cycle through states
+
+    localStorage.setItem("currentStateIndex", currentStateIndex);// Save current state to localStorage
 
     switch (currentStateIndex) {
         case 0: // STOPPED state
@@ -33,16 +37,21 @@ function nextState() {
             if (localStorage.getItem("country") == "true") {
                 localStorage.setItem("latestCountry", country);
             }
-            createPsiphonConfig(country); // Create config based on the selected country
-            ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
+            // Create config based on the selected country
+            if (!createPsiphonConfig(country)) {
+                currentStateIndex = -1;
+                nextState();
+            } else {
+                ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
 
-            isProxySettingsChanging = true;
+                isProxySettingsChanging = true;
 
-            proxyStartTimeout = setTimeout(() => {
-                if (!isProxyServerRunning) {
-                    showProxyWarning();
-                }
-            }, 10000);
+                proxyStartTimeout = setTimeout(() => {
+                    if (!isProxyServerRunning) {
+                        showProxyWarning();
+                    }
+                }, 10000);
+            }
             break;
         case 2: // STARTED state
             if (!isProxySettingsChanging) {
@@ -264,6 +273,10 @@ createBrowserList(document.getElementById('browserList'), createBrowserListItem)
 
 // Listener for handling refresh browser list
 ipcRenderer.on('refresh-browser-list', () => {
+    checkboxes.forEach(checkbox => {
+        document.getElementById(checkbox.id).removeEventListener('click', checkCheckboxStatus);
+    });
+    changeProxySettings = [];
     checkboxes = [];
     createBrowserList(document.getElementById('browserList'), createBrowserListItem);
     addEventListener();

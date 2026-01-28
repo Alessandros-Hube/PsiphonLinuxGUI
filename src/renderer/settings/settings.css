@@ -212,6 +212,13 @@ input:checked+.slider:before {
     color: #ff0000;
 }
 
+.remove-btn:disabled {
+    background-color: #2a2a2a;
+    color: #888888;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 /* Button Container */
 .settings-actions {
     display: flex;
@@ -239,6 +246,13 @@ input:checked+.slider:before {
     background-color: #36794b;
 }
 
+.new-btn:disabled {
+    background-color: #2a2a2a;
+    color: #888888;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 /* Reset Button */
 .reset-btn {
     background-color: #5a2d2d;
@@ -249,18 +263,23 @@ input:checked+.slider:before {
     background-color: #703535;
 }
 
+.reset-btn:disabled {
+    background-color: #2a2a2a;
+    color: #888888;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 /* Save Button */
 .save-btn {
     background-color: #005fa3;
     color: #ffffff;
 }
 
-/* Save Hover */
 .save-btn:hover:not(:disabled) {
     background-color: #007acc;
 }
 
-/* Save Disabled */
 .save-btn:disabled {
     background-color: #2a2a2a;
     color: #888888;
@@ -268,6 +287,14 @@ input:checked+.slider:before {
     opacity: 0.6;
 }
 
+.proxy-hint {
+    display: none;
+    color: red;
+}
+
+.proxy-hint.is-visible {
+    display: flex;
+}
 
 /* Modal Overlay */
 .modal {
