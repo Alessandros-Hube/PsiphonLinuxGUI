@@ -17,9 +17,13 @@ let isProxySettingsChanging = false;
 let isProxyServerRunning = false;
 let proxyStartTimeout;
 
+localStorage.setItem("currentStateIndex", currentStateIndex); // Save initial state to localStorage
+
 // Function to move to the next state in the application
 function nextState() {
     currentStateIndex = (currentStateIndex + 1) % states.length; // Cycle through states
+
+    localStorage.setItem("currentStateIndex", currentStateIndex);// Save current state to localStorage
 
     switch (currentStateIndex) {
         case 0: // STOPPED state

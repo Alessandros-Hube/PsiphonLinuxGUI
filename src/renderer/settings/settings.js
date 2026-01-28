@@ -248,3 +248,14 @@ function validateCreateForm() {
 modal.querySelectorAll('input').forEach(input => {
     input.addEventListener('input', validateCreateForm);
 });
+
+// Disable settings if not in STOPPED state
+if (localStorage.getItem("currentStateIndex") != 0) {
+    document.querySelector(".proxy-hint").classList.add("is-visible");
+    document.querySelector(".setting-browser-list").style.height = "450px";
+    document.querySelector(".new-btn").disabled = true;
+    document.querySelector(".reset-btn").disabled = true;
+    document.querySelector(".save-btn").disabled = true;
+    document.querySelectorAll(".remove-btn").forEach(btn => btn.disabled = true);
+    document.querySelectorAll(".drag-handle").forEach(handle => handle.style.display = "none");
+}
