@@ -269,6 +269,10 @@ createBrowserList(document.getElementById('browserList'), createBrowserListItem)
 
 // Listener for handling refresh browser list
 ipcRenderer.on('refresh-browser-list', () => {
+    checkboxes.forEach(checkbox => {
+        document.getElementById(checkbox.id).removeEventListener('click', checkCheckboxStatus);
+    });
+    changeProxySettings = [];
     checkboxes = [];
     createBrowserList(document.getElementById('browserList'), createBrowserListItem);
     addEventListener();
