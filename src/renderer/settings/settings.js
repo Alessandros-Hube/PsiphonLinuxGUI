@@ -33,26 +33,31 @@ function setTheme(theme) {
 const savedTheme = localStorage.getItem("theme");
 setTheme(savedTheme);
 
-
+// Function to initialize the general settings checkboxes
 function initGeneral() {
     document.getElementById("browserScrips").checked = localStorage.getItem("browserScrips") == "true" ? true : false;
     document.getElementById("country").checked = localStorage.getItem("country") == "true" ? true : false;
 }
-
 initGeneral();
-
-
-// Initial call to add EventListener
-addEventListener();
 
 // Add event listeners to each checkbox for status checking
 function addEventListener() {
     ["browserScrips", "country"].forEach(key => {
         document.getElementById(key).addEventListener('click', () => {
             localStorage.setItem(key, document.getElementById(key).checked);
+            if (key === "country" && !document.getElementById(key).checked) {
+                localStorage.removeItem("latestCountry");
+            }
+            if (key === "browserScrips" && !document.getElementById(key).checked) {
+                const browserConfig = getConfig("browser.config");
+                browserConfig.forEach(browser => {
+                    localStorage.removeItem(browser.name);
+                });
+            }
         });
     });
 }
+addEventListener();
 
 // Drag & drop function 
 document.addEventListener('DOMContentLoaded', () => {
@@ -96,6 +101,12 @@ function saveBrowserList() {
 
     const browserConfig = getConfig("browser.config");
 
+    browserConfig.forEach(browser => {
+        if (localStorage.getItem("browserScrips") == "true") {
+            localStorage.removeItem(browser.name);
+        }
+    });
+
     const browserMap = new Map(
         browserConfig.map(browser => [browser.name, browser])
     );
@@ -121,7 +132,13 @@ function resetBrowserList() {
     const browserList = document.querySelector('.setting-browser-list');
 
     const browserConfig = getDefaultBrowserConfig();
-    console.log(browserConfig);
+
+    browserConfig.forEach(browser => {
+        if (localStorage.getItem("browserScrips") == "true") {
+            localStorage.removeItem(browser.name);
+        }
+    });
+
     browserList.innerHTML = createBrowserListItem(browserConfig);
 
     writeFileSafe(getConfigPath('browser.config'), JSON.stringify(browserConfig, null, 2), 'utf-8');
@@ -138,6 +155,10 @@ document.querySelector('.setting-browser-list').addEventListener('click', (e) =>
 
     const item = removeBtn.closest('.browser-item');
     if (!item) return;
+
+    if (localStorage.getItem("browserScrips") == "true") {
+        localStorage.removeItem(item.querySelector('.toggle-text').innerText);
+    }
 
     item.remove();
 
