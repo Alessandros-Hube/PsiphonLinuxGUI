@@ -33,16 +33,21 @@ function nextState() {
             if (localStorage.getItem("country") == "true") {
                 localStorage.setItem("latestCountry", country);
             }
-            createPsiphonConfig(country); // Create config based on the selected country
-            ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
+            // Create config based on the selected country
+            if (!createPsiphonConfig(country)) {
+                currentStateIndex = -1;
+                nextState();
+            } else {
+                ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
 
-            isProxySettingsChanging = true;
+                isProxySettingsChanging = true;
 
-            proxyStartTimeout = setTimeout(() => {
-                if (!isProxyServerRunning) {
-                    showProxyWarning();
-                }
-            }, 10000);
+                proxyStartTimeout = setTimeout(() => {
+                    if (!isProxyServerRunning) {
+                        showProxyWarning();
+                    }
+                }, 10000);
+            }
             break;
         case 2: // STARTED state
             if (!isProxySettingsChanging) {

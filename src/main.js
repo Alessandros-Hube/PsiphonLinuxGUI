@@ -3,11 +3,7 @@ const { app, BrowserWindow, shell } = require('electron')
 const path = require('node:path')
 const { execSync, spawn } = require('child_process');
 const { ipcMain } = require('electron');
-const { iconsDir, userConfigPath } = require('./util');
-const fs = require('fs');
-
-
-const scriptPath = path.join(__dirname, '../scripts');
+const { getScript, iconsDir } = require('./util');
 
 const appBackendDir = path.join(__dirname, 'backend');
 const psiphonPath = path.join(appBackendDir, 'psiphon.sh');
@@ -101,21 +97,6 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit()
 })
 
-// Function to get start and stop script for changing browser settings
-function getScript(name, scriptType) {
-    try {
-        const fileContent = fs.readFileSync(userConfigPath, 'utf-8');
-        const browserConfig = JSON.parse(fileContent);
-        const browser = browserConfig.find(b => b.name === name);
-        if (browser.scriptLocation == "interScript") {
-            return `${scriptPath}/${browser[scriptType]}`;
-        } else {
-            return browser[scriptType];
-        }
-    } catch (e) {
-        console.log("An error occurred while loading the browser configuration. " + e.message);
-    }
-}
 
 // Function to run a process with given command and arguments
 function runProcess({ command, args = [], label = '', onStdOut, onStdErr, onError, event }) {

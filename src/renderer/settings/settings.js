@@ -1,7 +1,11 @@
-const { ipcRenderer, shell } = require('electron');
-const { createBrowserList, appConfigPath, userConfigPath } = require('../../util');
-
-const fs = require('fs');
+const { ipcRenderer } = require('electron');
+const {
+    createBrowserList,
+    getDefaultBrowserConfig,
+    getConfig,
+    getConfigPath,
+    writeFileSafe
+} = require('../../util');
 
 const modal = document.getElementById('new-browser-modal');
 const iconInput = document.getElementById('icon');
@@ -90,49 +94,40 @@ function saveBrowserList() {
             item => item.querySelector('.toggle-text').innerText.replace(':', '')
         );
 
-    try {
-        const fileContent = fs.readFileSync(userConfigPath, 'utf-8');
-        const browserConfig = JSON.parse(fileContent);
+    const browserConfig = getConfig("browser.config");
 
-        const browserMap = new Map(
-            browserConfig.map(browser => [browser.name, browser])
-        );
+    const browserMap = new Map(
+        browserConfig.map(browser => [browser.name, browser])
+    );
 
-        const newConfig = order
-            .filter(name => browserMap.has(name))
-            .map(name => browserMap.get(name));
+    const newConfig = order
+        .filter(name => browserMap.has(name))
+        .map(name => browserMap.get(name));
 
-        if (newConfig.length !== browserConfig.length) {
-            console.warn('Config length mismatch after reordering');
-        }
-
-        fs.writeFileSync(userConfigPath, JSON.stringify(newConfig, null, 2), 'utf-8');
-        console.log('Browser config reordered and saved');
-
-        ipcRenderer.send('browser-list-updated');
-        document.querySelector('.save-btn').disabled = true;
-    } catch (e) {
-        console.error('Failed to save browser order:', e);
+    if (newConfig.length !== browserConfig.length) {
+        console.warn('Config length mismatch after reordering');
     }
+
+    writeFileSafe(getConfigPath('browser.config'), JSON.stringify(newConfig, null, 2), 'utf-8');
+    console.log('Browser config reordered and saved');
+
+    ipcRenderer.send('browser-list-updated');
+    document.querySelector('.save-btn').disabled = true;
 }
 document.querySelector('.save-btn').addEventListener('click', saveBrowserList);
 
 // Function to reset the browser list
 function resetBrowserList() {
     const browserList = document.querySelector('.setting-browser-list');
-    try {
-        const defaultConfig = fs.readFileSync(appConfigPath, 'utf-8');
-        const browserConfig = JSON.parse(defaultConfig);
 
-        browserList.innerHTML = createBrowserListItem(browserConfig);
+    const browserConfig = getDefaultBrowserConfig();
+    console.log(browserConfig);
+    browserList.innerHTML = createBrowserListItem(browserConfig);
 
-        fs.writeFileSync(userConfigPath, JSON.stringify(browserConfig, null, 2), 'utf-8');
+    writeFileSafe(getConfigPath('browser.config'), JSON.stringify(browserConfig, null, 2), 'utf-8');
 
-        ipcRenderer.send('browser-list-updated');
-        document.querySelector('.save-btn').disabled = true;
-    } catch (e) {
-        browserList.innerHTML = "An error occurred while loading the browser configuration.<br><br>" + e.message;
-    }
+    ipcRenderer.send('browser-list-updated');
+    document.querySelector('.save-btn').disabled = true;
 }
 document.querySelector('.reset-btn').addEventListener('click', resetBrowserList);
 
@@ -202,21 +197,16 @@ function createNewBrowserEntry() {
         stopScript: document.getElementById('stop-script').value
     };
 
-    try {
-        const fileContent = fs.readFileSync(userConfigPath, 'utf-8');
-        const browserConfig = JSON.parse(fileContent);
+    const browserConfig = getConfig("browser.config");
 
-        browserConfig.push(entry)
-        fs.writeFileSync(userConfigPath, JSON.stringify(browserConfig, null, 2), 'utf-8');
+    browserConfig.push(entry)
+    writeFileSafe(getConfigPath('browser.config'), JSON.stringify(browserConfig, null, 2), 'utf-8');
 
-        createBrowserList(document.querySelector('.setting-browser-list'), createBrowserListItem);
+    createBrowserList(document.querySelector('.setting-browser-list'), createBrowserListItem);
 
-        ipcRenderer.send('browser-list-updated');
+    ipcRenderer.send('browser-list-updated');
 
-        modal.classList.add('hidden');
-    } catch (e) {
-        console.log("Failed to create a new entry: " + e.message);
-    }
+    modal.classList.add('hidden');
 }
 modal.querySelector('.create-btn').addEventListener('click', createNewBrowserEntry);
 
