@@ -15,6 +15,7 @@ let changeProxySettings = [];
 let currentStateIndex = 0;
 let isProxySettingsChanging = false;
 let isProxyServerRunning = false;
+let isPortFree = true;
 let proxyStartTimeout;
 
 localStorage.setItem("currentStateIndex", currentStateIndex); // Save initial state to localStorage
@@ -42,6 +43,7 @@ function nextState() {
                 currentStateIndex = -1;
                 nextState();
             } else {
+                isPortFree = true;
                 ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
 
                 isProxySettingsChanging = true;
@@ -105,12 +107,19 @@ ipcRenderer.on('proxy-watch', (event, response) => {
         isProxyServerRunning = true;
         isProxySettingsChanging = false;
         nextState();
-    } else if (res != "HTTP:OK" && isProxyServerRunning && currentStateIndex != 0) {
+    } else if (res != "HTTP:OK" && isProxyServerRunning && currentStateIndex != 0 && isPortFree) {
         isProxyServerRunning = false;
         currentStateIndex = 0;
         nextState();
     }
     document.getElementById('proxyWarning').innerHTML = res === "HTTP:DOWN" ? "The server from the selected country is currently unavailable." : "The device network is down. Please check your internet connection.";
+});
+
+// Listener for handling port errors
+ipcRenderer.on('port-error', (event, err) => {
+    isPortFree = false;
+    nextState();
+    alert(`${err.toString()}`);
 });
 
 // Function to show the proxy warning

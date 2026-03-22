@@ -8,9 +8,11 @@ const { getScript, iconsDir } = require('./util');
 const appBackendDir = path.join(__dirname, 'backend');
 const psiphonPath = path.join(appBackendDir, 'psiphon.sh');
 const corePath = path.join(appBackendDir, 'psiphon-tunnel-core-x86_64');
+const checkPort = path.join(appBackendDir, 'check-port.sh');
 const proxyWatch = path.join(appBackendDir, 'proxy-watch.sh');
 
 let restoreProxySettings = [];
+let isPortFree = false;
 
 let mainWindow = null;
 let childWindow = null;
@@ -201,6 +203,21 @@ function executeProxyWatchScript(event) {
     });
 }
 
+// Function to execute the check port script
+function executeCheckPortScript(event) {
+    runProcess({
+        command: 'bash',
+        args: [checkPort],
+        label: 'Check Port',
+        event,
+        onStdOut: (msg, event) => {
+            if (event && msg.toString().includes("to connect to proxy server is occupied")) {
+                event.reply('port-error', msg);
+            }
+        }
+    });
+}
+
 // Event listener for the process exit event
 process.on('exit', () => {
     // Iterate through the list of proxy settings to restore
@@ -241,6 +258,12 @@ ipcMain.on('open-settings-page', () => {
 
 // Listener for starting the VPN/proxy server
 ipcMain.on('start-vpn-proxy-server', (event) => {
+    if (!isPortFree) {
+        // Start the check port script to check the connection port
+        executeCheckPortScript(event);
+    }
+    isPortFree = true;
+
     // Start the proxy watch script to monitor the connection status
     executeProxyWatchScript(event);
 
