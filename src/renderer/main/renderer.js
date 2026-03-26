@@ -32,6 +32,8 @@ function nextState() {
             ipcRenderer.send('restore-settings'); // Restore original settings
             isProxySettingsChanging = false; // Reset flag
             clearTimeout(proxyStartTimeout); // Clear any existing timeouts
+            showProxyWarningText(false);
+            updateSidebarInfo("---", "---", null, "---");
             break;
         case 1: // STARTING state
             const country = document.getElementById('customSelect').getAttribute("data-value"); // Get selected country
@@ -44,6 +46,7 @@ function nextState() {
                 nextState();
             } else {
                 isPortFree = true;
+                updateSidebarInfo("Loading...", "Loading...", null, "Loading...");
                 ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
 
                 isProxySettingsChanging = true;
@@ -59,6 +62,10 @@ function nextState() {
             if (!isProxySettingsChanging) {
                 ipcRenderer.send('change-proxy-setting', changeProxySettings); // Apply new proxy settings
                 isProxySettingsChanging = true; // Set flag
+            }
+            if (localStorage.getItem("info") == "true") {
+                fetchIPInfo();
+                showProxyWarningText(changeProxySettings.length == 0);
             }
             if (!isProxyServerRunning) {
                 nextState();
@@ -91,6 +98,9 @@ ipcRenderer.on('proxy-setting-error', (event, changeProxySetting) => {
     });
 
     alert(`${changeProxySetting} is not installed`);
+    if (localStorage.getItem("info") == "true") {
+        showProxyWarningText(changeProxySettings.length == 0);
+    }
 });
 
 // Listener for handling server errors
@@ -291,6 +301,28 @@ ipcRenderer.on('refresh-browser-list', () => {
     addEventListener();
 });
 
+// Listener for handling refresh info text
+ipcRenderer.on('refresh-info-text', () => {
+    changeInfoText();
+});
+
+// Function to change info text
+function changeInfoText() {
+    if (localStorage.getItem("info") == "true") {
+        document.getElementById('ip-info').style = "display:block";
+        document.getElementById('info-text').style = "display:none";
+        if (currentStateIndex == 2) {
+            fetchIPInfo();
+            showProxyWarningText(changeProxySettings.length == 0);
+        }
+    } else {
+        document.getElementById('ip-info').style = "display:none";
+        document.getElementById('info-text').style = "display:block";
+        showProxyWarningText(false);
+    }
+}
+changeInfoText();
+
 // Create the browserToggles HTML containers for the browserList
 function createBrowserListItem(browserConfig) {
     return browserConfig.map((browser, id) => {
@@ -362,3 +394,52 @@ function isNewerVersion(latest, current) {
     }
     return false;
 }
+
+// Listener for handling ip info
+ipcRenderer.on('ip-info-result', (event, { ip, country, countryCode, city }) => {
+    updateSidebarInfo(ip, country, countryCode, city);
+});
+
+// Function to get IP info
+function fetchIPInfo() {
+    ipcRenderer.send('fetch-ip-info');
+}
+
+// Set IP & Country in the sidebar
+function updateSidebarInfo(ip, country, countryCode, city) {
+    document.getElementById('current-ip').textContent = ip || '---';
+    document.getElementById('current-country').textContent = country || '---';
+    document.getElementById('current-city').textContent = city || '---';
+
+    const flagIcon = document.getElementById('flag-icon');
+
+    if (countryCode) {
+        flagIcon.className = `fi fi-${countryCode.toLowerCase()}`;
+        flagIcon.style.display = 'inline-block';
+    } else {
+        flagIcon.className = '';
+        flagIcon.style.display = 'none';
+    }
+}
+
+// Display a warning box if NO app proxy setting is active
+function showProxyWarningText(show) {
+    document.getElementById('proxy-warning-box').style.display = show ? 'block' : 'none';
+}
+
+// Modal open
+document.getElementById('btn-show-manual-instructions').addEventListener('click', () => {
+    document.getElementById('manual-proxy-modal').style.display = 'flex';
+});
+
+// Modal close
+document.getElementById('btn-close-modal').addEventListener('click', () => {
+    document.getElementById('manual-proxy-modal').style.display = 'none';
+});
+
+// Optional: Clicking the overlay closes the modal
+document.getElementById('manual-proxy-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+        e.currentTarget.style.display = 'none';
+    }
+});

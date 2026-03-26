@@ -227,6 +227,82 @@ body.dark {
     z-index: 1;
 }
 
+#ip-info {
+    display: none;
+}
+
+#proxy-warning-box {
+    display: none;
+    background-color: #ff4d4d;
+    color: white;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: xx-large;
+}
+
+#proxy-warning-box #btn-show-manual-instructions {
+    background: white;
+    color: #cc0000;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: large;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modal Box */
+.modal-box {
+    background: light-dark(#f7f7f7, #181818);
+    color: light-dark(#1f1f1f, #e0e0e0);
+    border-radius: 10px;
+    padding: 24px 28px;
+    max-width: 25em;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.modal-box h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: light-dark(black, white);
+}
+
+.modal-box code {
+    background: light-dark(#d0d0d7, #2a2a3e);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+#btn-close-modal {
+    margin-top: 16px;
+    background: #5555cc;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+#btn-close-modal:hover {
+    background: #7777dd;
+}
+
 #browserList {
     overflow-y: auto;
     height: 48vh;
@@ -380,6 +456,14 @@ input:checked+.slider:before {
         font-size: x-large;
     }
 
+    #proxy-warning-box {
+        font-size: x-large;
+    }
+
+    #proxy-warning-box #btn-show-manual-instructions {
+        font-size: medium;
+    }
+
     .localPath {
         width: 24px;
         height: 24px;
@@ -413,6 +497,14 @@ input:checked+.slider:before {
 @media (max-width: 1440px) {
     body {
         font-size: 20px;
+    }
+
+    #proxy-warning-box {
+        font-size: 20px;
+    }
+
+    #proxy-warning-box #btn-show-manual-instructions {
+        font-size: 18px;
     }
 
     .localPath {
@@ -449,6 +541,14 @@ input:checked+.slider:before {
         font-size: 18px;
     }
 
+    #proxy-warning-box {
+        font-size: 18px;
+    }
+
+    #proxy-warning-box #btn-show-manual-instructions {
+        font-size: 16px;
+    }
+
     .disconnect-btn {
         font-size: 18px;
     }
@@ -475,6 +575,14 @@ input:checked+.slider:before {
 @media (max-width: 1080px) {
     body {
         font-size: 16px;
+    }
+
+    #proxy-warning-box {
+        font-size: 16px;
+    }
+
+    #proxy-warning-box #btn-show-manual-instructions {
+        font-size: 14px;
     }
 
     .localPath {

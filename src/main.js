@@ -218,6 +218,47 @@ function executeCheckPortScript(event) {
     });
 }
 
+// Function to get IP info via curl
+function fetchIPInfoViaCurl(event) {
+    runProcess({
+        command: 'bash',
+        args: ['-c', 'curl -s --max-time 10 --proxy http://127.0.0.1:8081 http://ip-api.com/json/'],
+        label: 'Fetch IP Info',
+        event,
+        onStdOut: (msg, event) => {
+            try {
+                const data = JSON.parse(msg.toString());
+                if (data.status === 'success' && event) {
+                    event.reply('ip-info-result', {
+                        ip: data.query,
+                        country: data.country,
+                        countryCode: data.countryCode,
+                        city: data.city
+                    });
+                } else {
+                    if (event) event.reply('ip-info-result', {
+                        ip: '---', country: '---', countryCode: null, city: '---'
+                    });
+                }
+            } catch (e) {
+                if (event) event.reply('ip-info-result', {
+                    ip: '---', country: '---', countryCode: null, city: '---'
+                });
+            }
+        },
+        onStdErr: (msg, event) => {
+            if (event) event.reply('ip-info-result', {
+                ip: '---', country: '---', countryCode: null, city: '---'
+            });
+        },
+        onError: (err, event) => {
+            if (event) event.reply('ip-info-result', {
+                ip: '---', country: '---', countryCode: null, city: '---'
+            });
+        }
+    });
+}
+
 // Event listener for the process exit event
 process.on('exit', () => {
     // Iterate through the list of proxy settings to restore
@@ -254,6 +295,11 @@ ipcMain.on('debug', (_, args) => {
 // Listener for opening the settings page
 ipcMain.on('open-settings-page', () => {
     createSettingsWindow();
+});
+
+// Listener for getting IP info 
+ipcMain.on('fetch-ip-info', (event) => {
+    fetchIPInfoViaCurl(event);
 });
 
 // Listener for starting the VPN/proxy server
@@ -314,6 +360,13 @@ ipcMain.on('restore-settings', (_) => {
 ipcMain.on('browser-list-updated', () => {
     if (mainWindow) {
         mainWindow.webContents.send('refresh-browser-list');
+    }
+});
+
+// Listener to refresh the browser list 
+ipcMain.on('info-text-change', () => {
+    if (mainWindow) {
+        mainWindow.webContents.send('refresh-info-text');
     }
 });
 

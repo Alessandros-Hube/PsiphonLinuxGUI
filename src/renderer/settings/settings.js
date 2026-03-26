@@ -37,12 +37,13 @@ setTheme(savedTheme);
 function initGeneral() {
     document.getElementById("browserScrips").checked = localStorage.getItem("browserScrips") == "true" ? true : false;
     document.getElementById("country").checked = localStorage.getItem("country") == "true" ? true : false;
+    document.getElementById("info").checked = localStorage.getItem("info") == "true" ? true : false;
 }
 initGeneral();
 
 // Add event listeners to each checkbox for status checking
 function addEventListener() {
-    ["browserScrips", "country"].forEach(key => {
+    ["browserScrips", "country", "info"].forEach(key => {
         document.getElementById(key).addEventListener('click', () => {
             localStorage.setItem(key, document.getElementById(key).checked);
             if (key === "country" && !document.getElementById(key).checked) {
@@ -53,6 +54,14 @@ function addEventListener() {
                 browserConfig.forEach(browser => {
                     localStorage.removeItem(browser.name);
                 });
+            }
+            if (key === "info") {
+                if (!document.getElementById(key).checked) {
+                    localStorage.setItem("info", false);
+                } else {
+                    localStorage.setItem("info", true);
+                }
+                ipcRenderer.send('info-text-change');
             }
         });
     });
