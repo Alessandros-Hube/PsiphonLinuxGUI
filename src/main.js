@@ -50,6 +50,8 @@ function createSettingsWindow() {
         width: 700,
         height: 600,
 
+        icon: `${iconsDir}/psiphonlinuxgui.png`,
+
         minimizable: false,
         maximizable: false,
         resizable: false,
