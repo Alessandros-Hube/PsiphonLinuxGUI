@@ -1,6 +1,6 @@
 // Import required modules from Electron and Node.js
 const { ipcRenderer } = require('electron');
-const { createBrowserList, createPsiphonConfig, iconsDir, imagesDir } = require('../../util');
+const { createBrowserList, createPsiphonConfig, getGUIUpdateInfo, initBackend, iconsDir, imagesDir } = require('../../util');
 
 // Define the states the application can be in
 const states = ['STOPPED', 'STARTING', 'STARTED'];
@@ -40,11 +40,10 @@ function nextState() {
             if (localStorage.getItem("country") == "true") {
                 localStorage.setItem("latestCountry", country);
             }
-            // Create config based on the selected country
-            if (!createPsiphonConfig(country)) {
-                currentStateIndex = -1;
-                nextState();
-            } else {
+
+            // Create config based on the selected country and inti the backend
+            const isBackendInit = initBackend();
+            if (createPsiphonConfig(country) && isBackendInit) {
                 isPortFree = true;
                 updateSidebarInfo("Loading...", "Loading...", null, "Loading...");
                 ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
@@ -56,6 +55,9 @@ function nextState() {
                         showProxyWarning();
                     }
                 }, 10000);
+            } else {
+                currentStateIndex = -1;
+                nextState();
             }
             break;
         case 2: // STARTED state
@@ -367,32 +369,13 @@ checkForUpdate();
 
 // Function to check if a new version of the app is available on GitHub
 async function checkForUpdate() {
-    try {
-        const currentVersion = await ipcRenderer.invoke("get-version");
-        const response = await fetch('https://api.github.com/repos/Alessandros-Hube/PsiphonLinuxGUI/releases/latest');
-        const data = await response.json();
-        const latestVersion = data.tag_name.replace(/^v/, '');
-
-        if (isNewerVersion(latestVersion, currentVersion)) {
-            notifyBtn.style.display = "inline";
-            bannerText.textContent = `Version ${latestVersion} of PsiphonLinuxGUI is available!`;
-        } else {
-            notifyBtn.style.display = "none";
-        }
-    } catch (err) {
-        console.log(err);
+    const result = await getGUIUpdateInfo();
+    if (!result && result.hasUpdate) {
+        notifyBtn.style.display = "inline";
+        bannerText.textContent = `Version ${result.latestVersion} of PsiphonLinuxGUI is available!`;
+    } else {
+        notifyBtn.style.display = "none";
     }
-}
-
-// Function to check if is latest version number newer then the current version number
-function isNewerVersion(latest, current) {
-    const latestParts = latest.split('.').map(Number);
-    const currentParts = current.split('.').map(Number);
-    for (let i = 0; i < latestParts.length; i++) {
-        if ((latestParts[i] || 0) > (currentParts[i] || 0)) return true;
-        if ((latestParts[i] || 0) < (currentParts[i] || 0)) return false;
-    }
-    return false;
 }
 
 // Listener for handling ip info

@@ -3,11 +3,9 @@ const { app, BrowserWindow, shell } = require('electron')
 const path = require('node:path')
 const { execSync, spawn } = require('child_process');
 const { ipcMain } = require('electron');
-const { getScript, iconsDir } = require('./util');
+const { getScript, appBackendDir, iconsDir } = require('./util');
 
-const appBackendDir = path.join(__dirname, 'backend');
 const psiphonPath = path.join(appBackendDir, 'psiphon.sh');
-const corePath = path.join(appBackendDir, 'psiphon-tunnel-core-x86_64');
 const checkPort = path.join(appBackendDir, 'check-port.sh');
 const proxyWatch = path.join(appBackendDir, 'proxy-watch.sh');
 
@@ -314,7 +312,7 @@ ipcMain.on('start-vpn-proxy-server', (event) => {
     executeProxyWatchScript(event);
 
     // Execute a command to start the psiphon-tunnel-core with a specific configuration
-    executeStartStopScript(psiphonPath, ['start', `${corePath}`], event);
+    executeStartStopScript(psiphonPath, ['start'], event);
 });
 
 // Listener for shutting down the VPN/proxy server
