@@ -21,6 +21,9 @@
             <div class="setting-sidebar-item" data-page="browser-list">
                 Edit Browser list
             </div>
+            <div class="setting-sidebar-item" data-page="about-page">
+                About Page
+            </div>
         </div>
 
         <!-- CONTENT -->
@@ -46,6 +49,14 @@
                 </div>
 
                 <div class="toggle-container">
+                    <div class="toggle-text">Show IP, country & city of connected Proxy Server:</div>
+                    <label class="switch">
+                        <input type="checkbox" id="info">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-container">
                     <div class="toggle-text">Theme:</div>
 
                     <select class="fa" id="themeSelector">
@@ -59,9 +70,9 @@
 
             <!-- EDITED BROWSERSLIST PAGE -->
             <div class="page" id="browser-list">
-                <p class="proxy-hint">
+                <div class="hint-box" id="hint1">
                     To change the browser list, please turn off the proxy server.
-                </p>
+                </div>
                 <div class="settings-actions">
                     <button class="new-btn">New</button>
                     <button class="reset-btn">Reset to default</button>
@@ -129,6 +140,87 @@
                         <button class="cancel-btn">Cancel</button>
                         <button class="create-btn" disabled>Create</button>
                     </div>
+
+                </div>
+            </div>
+
+            <div class="page" id="about-page">
+                <div class="about-container">
+
+                    <div class="logo-area">
+                        <div class="logo-text">
+                            <h1>PsiphonLinuxGUI</h1>
+                            <p class="tagline">Unofficial Psiphon Frontend for Linux</p>
+                        </div>
+                    </div>
+                    <div class="hint-box" id="hint2">
+                        To update, please turn off the proxy server.
+                    </div>
+                    <div class="version-grid">
+
+                        <!-- Frontend Card -->
+                        <div class="version-card" id="gui-card">
+                            <div class="card-header">
+                                <span class="card-label">Frontend</span>
+                                <span class="status-badge" id="gui-status-badge">checking...</span>
+                            </div>
+                            <div class="version-row">
+                                <span class="version-label">Installed</span>
+                                <span class="version-value" id="gui-current">–</span>
+                            </div>
+                            <div class="version-row">
+                                <span class="version-label">Latest</span>
+                                <span class="version-value" id="gui-latest">–</span>
+                            </div>
+                            <a style="text-decoration: none;"
+                                href="https://github.com/Alessandros-Hube/PsiphonLinuxGUI/releases/latest"
+                                target="_blank">
+                                <button class="update-btn" id="gui-update-btn" disabled>
+                                    <span class="btn-icon">↑</span>
+                                    <span class="btn-text">Update Frontend</span>
+                                </button>
+                            </a>
+                            <div class="update-info" id="gui-update-info"></div>
+                        </div>
+
+                        <!-- Backend Card -->
+                        <div class="version-card" id="backend-card">
+                            <div class="card-header">
+                                <span class="card-label">Backend</span>
+                                <span class="status-badge" id="backend-status-badge">checking...</span>
+                            </div>
+                            <div class="version-row">
+                                <span class="version-label">Installed</span>
+                                <span class="version-value mono" id="backend-current">–</span>
+                            </div>
+                            <div class="version-row">
+                                <span class="version-label">Latest</span>
+                                <span class="version-value mono" id="backend-latest">–</span>
+                            </div>
+                            <button class="update-btn" id="backend-update-btn" disabled>
+                                <span class="btn-icon">↑</span>
+                                <span class="btn-text">Update Backend</span>
+                            </button>
+                            <div class="update-info" id="backend-update-info"></div>
+                            <div class="progress-bar-wrap" id="backend-progress-wrap" style="display:none">
+                                <div class="progress-bar" id="backend-progress-bar"></div>
+                                <span class="progress-label" id="backend-progress-label">Downloading...</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="links-row">
+                        <a class="link-pill" id="link-gui" href="https://github.com/Alessandros-Hube/PsiphonLinuxGUI"
+                            target="_blank"><i class="fa-brands fa-github"></i>GitHub Frontend</a>
+                        <a class="link-pill" id="link-backend"
+                            href="https://github.com/Psiphon-Labs/psiphon-tunnel-core-binaries/tree/master/linux"
+                            target="_blank"> <i class="fa-brands fa-github"></i>GitHub Backend</a>
+                        <a class="link-pill" id="link-psiphon" href="https://www.psiphon.ca" target="_blank">
+                            <i class="fa-solid fa-globe"></i>psiphon.ca</a>
+                    </div>
+
+                    <p class="license-note">Released under the MIT License · Not affiliated with Psiphon Inc.</p>
 
                 </div>
             </div>

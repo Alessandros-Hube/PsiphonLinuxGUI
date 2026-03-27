@@ -287,13 +287,15 @@ input:checked+.slider:before {
     opacity: 0.6;
 }
 
-.proxy-hint {
+.hint-box {
     display: none;
+    align-items: center;
+    padding: 10px;
+    background-color: light-dark(#d3d2d2, #2d2d2d);
+    border-radius: 6px;
     color: red;
-}
-
-.proxy-hint.is-visible {
-    display: flex;
+    text-align: center;
+    font-weight: bolder;
 }
 
 /* Modal Overlay */
@@ -479,4 +481,320 @@ input:checked+.slider:before {
         width: 16px;
         height: 16px;
     }
+}
+
+
+/* ── Variables ─────────────────────────────────────────────── */
+:root {
+    --bg: #0f1117;
+    --bg-card: light-dark(#d3d2d2, #2d2d2d);
+    --bg-card-hover: light-dark(#dbdbdb, #333333);
+    --border: light-dark(#ccc, #555);
+    --accent: #4a9eff;
+    --accent-dim: rgba(74, 158, 255, 0.12);
+    --accent-glow: rgba(74, 158, 255, 0.25);
+    --green: light-dark(#33b47a, #3ecf8e);
+    --green-dim: rgba(62, 207, 142, 0.12);
+    --orange: #f59e0b;
+    --orange-dim: rgba(245, 158, 11, 0.12);
+    --red: #f87171;
+    --text-primary: light-dark(black, white);
+    --text-secondary: light-dark(#434953, #8892a4);
+    --text-muted: light-dark(#434953, #8892a4);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font-sans: 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+}
+
+/* ── Reset ─────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* subtle grid bg */
+    background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: center center;
+}
+
+/* ── Layout ────────────────────────────────────────────────── */
+.about-container {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    animation: fadeUp 0.4s ease both;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Logo Area ─────────────────────────────────────────────── */
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.logo-icon svg {
+    width: 52px;
+    height: 52px;
+    filter: drop-shadow(0 0 12px var(--accent-glow));
+}
+
+.logo-text h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    color: var(--text-primary);
+}
+
+.tagline {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* ── Version Grid ──────────────────────────────────────────── */
+.version-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+/* ── Version Card ──────────────────────────────────────────── */
+.version-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+}
+
+/* ── Status Badge ──────────────────────────────────────────── */
+.status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    background: transparent;
+    transition: all 0.3s;
+}
+
+.status-badge.up-to-date {
+    color: var(--green);
+    background: var(--green-dim);
+    border-color: rgba(62, 207, 142, 0.3);
+}
+
+.status-badge.update-available {
+    color: var(--orange);
+    background: var(--orange-dim);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.status-badge.error {
+    color: var(--red);
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.3);
+}
+
+/* ── Version Rows ──────────────────────────────────────────── */
+.version-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    height: 20%;
+}
+
+.version-row:last-of-type {
+    border-bottom: none;
+}
+
+.version-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.version-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.version-value.mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+/* ── Update Button ─────────────────────────────────────────── */
+.update-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    padding: 9px 12px;
+    margin-top: 4px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid rgba(74, 158, 255, 0.3);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.update-btn:hover:not(:disabled) {
+    background: rgba(74, 158, 255, 0.2);
+    border-color: rgba(74, 158, 255, 0.5);
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.update-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.update-btn.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn-icon {
+    font-size: 15px;
+    line-height: 1;
+}
+
+/* ── Update Info Text ──────────────────────────────────────── */
+.update-info {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+    min-height: 25px;
+    margin-top: auto;
+}
+
+/* ── Progress Bar ──────────────────────────────────────────── */
+.progress-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: auto;
+}
+
+.progress-bar {
+    height: 4px;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.progress-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* ── Links Row ─────────────────────────────────────────────── */
+.links-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.link-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.link-pill svg {
+    width: 13px;
+    height: 13px;
+}
+
+.link-pill:hover {
+    color: var(--text-primary);
+    border-color: #3a4055;
+    background: var(--bg-card-hover);
+}
+
+/* ── License Note ──────────────────────────────────────────── */
+.license-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* ── Spinner (für loading state) ──────────────────────────── */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinning {
+    display: inline-block;
+    animation: spin 1s linear infinite;
 }

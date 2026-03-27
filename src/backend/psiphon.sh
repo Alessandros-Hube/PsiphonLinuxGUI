@@ -1,10 +1,10 @@
 #!/bin/bash
 
 ACTION="$1"
-PSIPHON_CORE="$2" # $2 is the path to the Psiphon core executable
 
 WORK_DIR="$HOME/.config/psiphonlinuxgui"
 PSIPHON_BIN="psiphon-tunnel-core-x86_64"
+PSIPHON_CORE="$WORK_DIR/$PSIPHON_BIN" 
 
 if [ "$ACTION" = "start" ]; then
 

@@ -1,9 +1,13 @@
 const { ipcRenderer } = require('electron');
 const {
+    checkBackendUpdate,
     createBrowserList,
+    getAppVersion,
     getDefaultBrowserConfig,
     getConfig,
     getConfigPath,
+    getGUIUpdateInfo,
+    updateBackend,
     writeFileSafe
 } = require('../../util');
 
@@ -37,12 +41,13 @@ setTheme(savedTheme);
 function initGeneral() {
     document.getElementById("browserScrips").checked = localStorage.getItem("browserScrips") == "true" ? true : false;
     document.getElementById("country").checked = localStorage.getItem("country") == "true" ? true : false;
+    document.getElementById("info").checked = localStorage.getItem("info") == "true" ? true : false;
 }
 initGeneral();
 
 // Add event listeners to each checkbox for status checking
 function addEventListener() {
-    ["browserScrips", "country"].forEach(key => {
+    ["browserScrips", "country", "info"].forEach(key => {
         document.getElementById(key).addEventListener('click', () => {
             localStorage.setItem(key, document.getElementById(key).checked);
             if (key === "country" && !document.getElementById(key).checked) {
@@ -53,6 +58,14 @@ function addEventListener() {
                 browserConfig.forEach(browser => {
                     localStorage.removeItem(browser.name);
                 });
+            }
+            if (key === "info") {
+                if (!document.getElementById(key).checked) {
+                    localStorage.setItem("info", false);
+                } else {
+                    localStorage.setItem("info", true);
+                }
+                ipcRenderer.send('info-text-change');
             }
         });
     });
@@ -101,29 +114,31 @@ function saveBrowserList() {
 
     const browserConfig = getConfig("browser.config");
 
-    browserConfig.forEach(browser => {
-        if (localStorage.getItem("browserScrips") == "true") {
-            localStorage.removeItem(browser.name);
+    if (browserConfig) {
+        browserConfig.forEach(browser => {
+            if (localStorage.getItem("browserScrips") == "true") {
+                localStorage.removeItem(browser.name);
+            }
+        });
+
+        const browserMap = new Map(
+            browserConfig.map(browser => [browser.name, browser])
+        );
+
+        const newConfig = order
+            .filter(name => browserMap.has(name))
+            .map(name => browserMap.get(name));
+
+        if (newConfig.length !== browserConfig.length) {
+            console.warn('Config length mismatch after reordering');
         }
-    });
 
-    const browserMap = new Map(
-        browserConfig.map(browser => [browser.name, browser])
-    );
+        writeFileSafe(getConfigPath('browser.config'), JSON.stringify(newConfig, null, 2), 'utf-8');
+        console.log('Browser config reordered and saved');
 
-    const newConfig = order
-        .filter(name => browserMap.has(name))
-        .map(name => browserMap.get(name));
-
-    if (newConfig.length !== browserConfig.length) {
-        console.warn('Config length mismatch after reordering');
+        ipcRenderer.send('browser-list-updated');
+        document.querySelector('.save-btn').disabled = true;
     }
-
-    writeFileSafe(getConfigPath('browser.config'), JSON.stringify(newConfig, null, 2), 'utf-8');
-    console.log('Browser config reordered and saved');
-
-    ipcRenderer.send('browser-list-updated');
-    document.querySelector('.save-btn').disabled = true;
 }
 document.querySelector('.save-btn').addEventListener('click', saveBrowserList);
 
@@ -132,19 +147,20 @@ function resetBrowserList() {
     const browserList = document.querySelector('.setting-browser-list');
 
     const browserConfig = getDefaultBrowserConfig();
+    if (browserConfig) {
+        browserConfig.forEach(browser => {
+            if (localStorage.getItem("browserScrips") == "true") {
+                localStorage.removeItem(browser.name);
+            }
+        });
 
-    browserConfig.forEach(browser => {
-        if (localStorage.getItem("browserScrips") == "true") {
-            localStorage.removeItem(browser.name);
-        }
-    });
+        browserList.innerHTML = createBrowserListItem(browserConfig);
 
-    browserList.innerHTML = createBrowserListItem(browserConfig);
+        writeFileSafe(getConfigPath('browser.config'), JSON.stringify(browserConfig, null, 2), 'utf-8');
 
-    writeFileSafe(getConfigPath('browser.config'), JSON.stringify(browserConfig, null, 2), 'utf-8');
-
-    ipcRenderer.send('browser-list-updated');
-    document.querySelector('.save-btn').disabled = true;
+        ipcRenderer.send('browser-list-updated');
+        document.querySelector('.save-btn').disabled = true;
+    }
 }
 document.querySelector('.reset-btn').addEventListener('click', resetBrowserList);
 
@@ -220,14 +236,16 @@ function createNewBrowserEntry() {
 
     const browserConfig = getConfig("browser.config");
 
-    browserConfig.push(entry)
-    writeFileSafe(getConfigPath('browser.config'), JSON.stringify(browserConfig, null, 2), 'utf-8');
+    if (browserConfig) {
+        browserConfig.push(entry)
+        writeFileSafe(getConfigPath('browser.config'), JSON.stringify(browserConfig, null, 2), 'utf-8');
 
-    createBrowserList(document.querySelector('.setting-browser-list'), createBrowserListItem);
+        createBrowserList(document.querySelector('.setting-browser-list'), createBrowserListItem);
 
-    ipcRenderer.send('browser-list-updated');
+        ipcRenderer.send('browser-list-updated');
 
-    modal.classList.add('hidden');
+        modal.classList.add('hidden');
+    }
 }
 modal.querySelector('.create-btn').addEventListener('click', createNewBrowserEntry);
 
@@ -251,7 +269,8 @@ modal.querySelectorAll('input').forEach(input => {
 
 // Disable settings if not in STOPPED state
 if (localStorage.getItem("currentStateIndex") != 0) {
-    document.querySelector(".proxy-hint").classList.add("is-visible");
+    document.getElementById("hint1").style.display = 'block';
+    document.querySelector(".settings-actions").style = 'margin-top: 10px';
     document.querySelector(".setting-browser-list").style.height = "450px";
     document.querySelector(".new-btn").disabled = true;
     document.querySelector(".reset-btn").disabled = true;
@@ -259,3 +278,154 @@ if (localStorage.getItem("currentStateIndex") != 0) {
     document.querySelectorAll(".remove-btn").forEach(btn => btn.disabled = true);
     document.querySelectorAll(".drag-handle").forEach(handle => handle.style.display = "none");
 }
+
+// Function to set status badge
+function setBadge(id, state) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'status-badge';
+    const map = {
+        checking: { cls: '', text: 'checking…' },
+        'up-to-date': { cls: 'up-to-date', text: '✓ up to date' },
+        'update-available': { cls: 'update-available', text: '↑ update available' },
+        error: { cls: 'error', text: 'error' },
+    };
+    const s = map[state] || map.checking;
+    if (s.cls) el.classList.add(s.cls);
+    el.textContent = s.text;
+}
+
+// Function to format date
+function formatDate(isoString) {
+    if (!isoString) return '–';
+    try {
+        return new Date(isoString).toLocaleDateString(undefined, {
+            year: 'numeric', month: 'short', day: 'numeric'
+        });
+    } catch { return isoString; }
+}
+
+// Function to check if a new version of the app is available on GitHub
+async function checkForUpdateGUI() {
+    setBadge('gui-status-badge', 'checking');
+
+    try {
+        const appVersion = await getAppVersion();
+        document.getElementById('gui-current').textContent = appVersion ? `v${appVersion}` : '–';
+
+        const result = await getGUIUpdateInfo();
+        if (!result) throw new Error('no result');
+
+        document.getElementById('gui-latest').textContent = result.latestVersion ? `v${result.latestVersion}` : '–';
+
+        if (result.hasUpdate) {
+            if (localStorage.getItem("currentStateIndex") != 0) {
+                document.getElementById("hint2").style.display = 'block';
+            }
+            setBadge('gui-status-badge', 'update-available');
+            document.getElementById('gui-update-btn').disabled = localStorage.getItem("currentStateIndex") != 0;
+            document.getElementById('gui-update-info').textContent = 'A new version is available on GitHub.';
+        } else {
+            setBadge('gui-status-badge', 'up-to-date');
+            document.getElementById('gui-update-info').textContent = 'You are on the latest version.';
+        }
+    } catch (err) {
+        setBadge('gui-status-badge', 'error');
+        document.getElementById('gui-latest').textContent = 'unavailable';
+        document.getElementById('gui-update-info').textContent = 'Could not check for updates.';
+        console.error('[About] GUI version check failed:', err);
+    }
+}
+checkForUpdateGUI();
+
+// Function to check if a new version of the backend binary is available on GitHub
+async function checkForUpdateBackend() {
+    setBadge('backend-status-badge', 'checking');
+
+    try {
+        // Lokal gespeicherte Version anzeigen
+        const local = getConfig('backendVersion.config');
+        if (!local) throw new Error('no result');
+
+        if (local.sha) {
+            document.getElementById("backend-current").innerHTML = `Commit: ${local.sha}<br> (${formatDate(local.date)})`;
+        } else {
+            document.getElementById('backend-current').textContent = 'unknown';
+        }
+
+        // Remote prüfen
+        const result = await checkBackendUpdate();
+        if (!result) throw new Error('no result');
+
+        document.getElementById("backend-latest").innerHTML = `Commit: ${result.latestVersion.sha}<br> (${formatDate(result.latestVersion.date)})`;
+
+        if (result.hasUpdate) {
+            if (localStorage.getItem("currentStateIndex") != 0) {
+                document.getElementById("hint2").style.display = 'block';
+            }
+            setBadge('backend-status-badge', 'update-available');
+            document.getElementById('backend-update-btn').disabled = localStorage.getItem("currentStateIndex") != 0;
+            document.getElementById('backend-update-info').textContent = 'A newer backend binary is available.';
+        } else {
+            setBadge('backend-status-badge', 'up-to-date');
+            document.getElementById('backend-update-info').textContent = 'Backend is up to date.';
+        }
+    } catch (err) {
+        setBadge('backend-status-badge', 'error');
+        document.getElementById('backend-latest').textContent = 'unavailable';
+        document.getElementById('backend-update-info').textContent = 'Could not check for updates.';
+        console.error('[About] Backend version check failed:', err);
+    }
+}
+checkForUpdateBackend();
+
+// Function to update backend 
+document.getElementById('backend-update-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('backend-update-btn');
+    const infoEl = document.getElementById('backend-update-info');
+    const wrapEl = document.getElementById('backend-progress-wrap');
+    const barEl = document.getElementById('backend-progress-bar');
+    const labelEl = document.getElementById('backend-progress-label');
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+    wrapEl.style.display = 'flex';
+    infoEl.textContent = '';
+    infoEl.style.display = 'none';
+
+    try {
+        // Register a progress listener
+        const handler = (pct) => {
+            // progress: 0–100
+            barEl.style.width = `${pct}%`;
+            labelEl.textContent = pct < 100
+                ? `Downloading… ${pct}%`
+                : 'Applying update…';
+        };
+
+        await updateBackend(handler);
+
+        barEl.style.width = '100%';
+        labelEl.textContent = 'Done!';
+        infoEl.style.display = 'block';
+        infoEl.textContent = 'Backend updated successfully.';
+        setBadge('backend-status-badge', 'up-to-date');
+
+        const newVersion = getConfig("backendVersion.config");
+        if (!newVersion) throw new Error('no result');
+        document.getElementById("backend-current").innerHTML = `Commit: ${newVersion.sha}<br> (${formatDate(newVersion.date)})`;
+
+        barEl.style.width = '0%';
+        labelEl.textContent = '';
+        wrapEl.style.display = 'none';
+    } catch (err) {
+        barEl.style.width = '0%';
+        labelEl.textContent = '';
+        wrapEl.style.display = 'none';
+        infoEl.style.display = 'block';
+        infoEl.textContent = `Update failed: ${err.message ?? 'unknown error'}`;
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        console.error('[About] Backend update failed:', err);
+    }
+});
