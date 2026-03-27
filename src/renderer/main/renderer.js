@@ -370,7 +370,7 @@ checkForUpdate();
 // Function to check if a new version of the app is available on GitHub
 async function checkForUpdate() {
     const result = await getGUIUpdateInfo();
-    if (!result && result.hasUpdate) {
+    if (result.hasUpdate) {
         notifyBtn.style.display = "inline";
         bannerText.textContent = `Version ${result.latestVersion} of PsiphonLinuxGUI is available!`;
     } else {
