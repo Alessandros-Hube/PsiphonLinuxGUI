@@ -4,14 +4,18 @@ HTTP_PROXY="127.0.0.1:8081"
 INTERVAL=3   # seconds
 
 check_http() {
-  curl -x "http://$HTTP_PROXY" \
-       --connect-timeout 3 \
-       -s https://example.com -o /dev/null
+    curl -x "http://$HTTP_PROXY" \
+        --connect-timeout 3 \
+        -k \
+        -s -o /dev/null -w "%{http_code}" \
+        https://example.com | grep -q "^[23]"
 }
 
 check_device_network() {
-  curl --connect-timeout 3 \
-       -s https://example.com -o /dev/null
+    curl --noproxy '*' \
+        --connect-timeout 3 \
+        -s -o /dev/null -w "%{http_code}" \
+        https://connectivitycheck.gstatic.com/generate_204 | grep -q "^204$"
 }
 
 while true; do

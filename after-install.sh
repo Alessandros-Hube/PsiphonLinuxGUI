@@ -13,7 +13,12 @@ else
     echo "The .desktop file was not found."
 fi
 
-# Create a symbolic link from the Psiphon executable to /usr/local/bin
-# This allows you to run 'psiphonlinuxgui' command from anywhere in the terminal without needing the full path
-sudo ln -s /opt/psiphonlinuxgui/psiphonlinuxgui /usr/local/bin/psiphonlinuxgui
+SYMLINK="/usr/local/bin/psiphonlinuxgui"
+TARGET="/opt/psiphonlinuxgui/psiphonlinuxgui"
 
+# Check if the symbolic link exist
+if [ ! -L "$SYMLINK" ]; then
+    # Create a symbolic link from the Psiphon executable to /usr/local/bin
+    # This allows you to run 'psiphonlinuxgui' command from anywhere in the terminal without needing the full path
+    sudo ln -s "$TARGET" "$SYMLINK"
+fi

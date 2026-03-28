@@ -3,14 +3,14 @@ const { app, BrowserWindow, shell } = require('electron')
 const path = require('node:path')
 const { execSync, spawn } = require('child_process');
 const { ipcMain } = require('electron');
-const { getScript, iconsDir } = require('./util');
+const { getScript, appBackendDir, iconsDir } = require('./util');
 
-const appBackendDir = path.join(__dirname, 'backend');
 const psiphonPath = path.join(appBackendDir, 'psiphon.sh');
-const corePath = path.join(appBackendDir, 'psiphon-tunnel-core-x86_64');
+const checkPort = path.join(appBackendDir, 'check-port.sh');
 const proxyWatch = path.join(appBackendDir, 'proxy-watch.sh');
 
 let restoreProxySettings = [];
+let isPortFree = false;
 
 let mainWindow = null;
 let childWindow = null;
@@ -49,6 +49,8 @@ function createSettingsWindow() {
         title: "Setting",
         width: 700,
         height: 600,
+
+        icon: `${iconsDir}/psiphonlinuxgui.png`,
 
         minimizable: false,
         maximizable: false,
@@ -201,6 +203,62 @@ function executeProxyWatchScript(event) {
     });
 }
 
+// Function to execute the check port script
+function executeCheckPortScript(event) {
+    runProcess({
+        command: 'bash',
+        args: [checkPort],
+        label: 'Check Port',
+        event,
+        onStdOut: (msg, event) => {
+            if (event && msg.toString().includes("to connect to proxy server is occupied")) {
+                event.reply('port-error', msg);
+            }
+        }
+    });
+}
+
+// Function to get IP info via curl
+function fetchIPInfoViaCurl(event) {
+    runProcess({
+        command: 'bash',
+        args: ['-c', 'curl -s --max-time 10 --proxy http://127.0.0.1:8081 http://ip-api.com/json/'],
+        label: 'Fetch IP Info',
+        event,
+        onStdOut: (msg, event) => {
+            try {
+                const data = JSON.parse(msg.toString());
+                if (data.status === 'success' && event) {
+                    event.reply('ip-info-result', {
+                        ip: data.query,
+                        country: data.country,
+                        countryCode: data.countryCode,
+                        city: data.city
+                    });
+                } else {
+                    if (event) event.reply('ip-info-result', {
+                        ip: '---', country: '---', countryCode: null, city: '---'
+                    });
+                }
+            } catch (e) {
+                if (event) event.reply('ip-info-result', {
+                    ip: '---', country: '---', countryCode: null, city: '---'
+                });
+            }
+        },
+        onStdErr: (msg, event) => {
+            if (event) event.reply('ip-info-result', {
+                ip: '---', country: '---', countryCode: null, city: '---'
+            });
+        },
+        onError: (err, event) => {
+            if (event) event.reply('ip-info-result', {
+                ip: '---', country: '---', countryCode: null, city: '---'
+            });
+        }
+    });
+}
+
 // Event listener for the process exit event
 process.on('exit', () => {
     // Iterate through the list of proxy settings to restore
@@ -239,13 +297,24 @@ ipcMain.on('open-settings-page', () => {
     createSettingsWindow();
 });
 
+// Listener for getting IP info 
+ipcMain.on('fetch-ip-info', (event) => {
+    fetchIPInfoViaCurl(event);
+});
+
 // Listener for starting the VPN/proxy server
 ipcMain.on('start-vpn-proxy-server', (event) => {
+    if (!isPortFree) {
+        // Start the check port script to check the connection port
+        executeCheckPortScript(event);
+    }
+    isPortFree = true;
+
     // Start the proxy watch script to monitor the connection status
     executeProxyWatchScript(event);
 
     // Execute a command to start the psiphon-tunnel-core with a specific configuration
-    executeStartStopScript(psiphonPath, ['start', `${corePath}`], event);
+    executeStartStopScript(psiphonPath, ['start'], event);
 });
 
 // Listener for shutting down the VPN/proxy server
@@ -294,6 +363,13 @@ ipcMain.on('browser-list-updated', () => {
     }
 });
 
+// Listener to refresh the browser list 
+ipcMain.on('info-text-change', () => {
+    if (mainWindow) {
+        mainWindow.webContents.send('refresh-info-text');
+    }
+});
+
 // Listener to refresh the theme 
 ipcMain.on('theme-updated', () => {
     if (mainWindow) {
@@ -305,7 +381,7 @@ ipcMain.on('theme-updated', () => {
 ipcMain.on('set-attention', () => {
     if (!mainWindow) return;
 
-    mainWindow.flashFrame(true);
+    mainWindow.focus(true);
 });
 
 // Handler for an invoke the version number of the app

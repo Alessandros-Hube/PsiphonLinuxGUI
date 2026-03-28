@@ -1,6 +1,6 @@
 // Import required modules from Electron and Node.js
 const { ipcRenderer } = require('electron');
-const { createBrowserList, createPsiphonConfig, iconsDir, imagesDir } = require('../../util');
+const { createBrowserList, createPsiphonConfig, getGUIUpdateInfo, initBackend, iconsDir, imagesDir } = require('../../util');
 
 // Define the states the application can be in
 const states = ['STOPPED', 'STARTING', 'STARTED'];
@@ -15,6 +15,7 @@ let changeProxySettings = [];
 let currentStateIndex = 0;
 let isProxySettingsChanging = false;
 let isProxyServerRunning = false;
+let isPortFree = true;
 let proxyStartTimeout;
 
 localStorage.setItem("currentStateIndex", currentStateIndex); // Save initial state to localStorage
@@ -31,17 +32,20 @@ function nextState() {
             ipcRenderer.send('restore-settings'); // Restore original settings
             isProxySettingsChanging = false; // Reset flag
             clearTimeout(proxyStartTimeout); // Clear any existing timeouts
+            showProxyWarningText(false);
+            updateSidebarInfo("---", "---", null, "---");
             break;
         case 1: // STARTING state
             const country = document.getElementById('customSelect').getAttribute("data-value"); // Get selected country
             if (localStorage.getItem("country") == "true") {
                 localStorage.setItem("latestCountry", country);
             }
-            // Create config based on the selected country
-            if (!createPsiphonConfig(country)) {
-                currentStateIndex = -1;
-                nextState();
-            } else {
+
+            // Create config based on the selected country and inti the backend
+            const isBackendInit = initBackend();
+            if (createPsiphonConfig(country) && isBackendInit) {
+                isPortFree = true;
+                updateSidebarInfo("Loading...", "Loading...", null, "Loading...");
                 ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
 
                 isProxySettingsChanging = true;
@@ -51,12 +55,19 @@ function nextState() {
                         showProxyWarning();
                     }
                 }, 10000);
+            } else {
+                currentStateIndex = -1;
+                nextState();
             }
             break;
         case 2: // STARTED state
             if (!isProxySettingsChanging) {
                 ipcRenderer.send('change-proxy-setting', changeProxySettings); // Apply new proxy settings
                 isProxySettingsChanging = true; // Set flag
+            }
+            if (localStorage.getItem("info") == "true") {
+                fetchIPInfo();
+                showProxyWarningText(changeProxySettings.length == 0);
             }
             if (!isProxyServerRunning) {
                 nextState();
@@ -89,6 +100,9 @@ ipcRenderer.on('proxy-setting-error', (event, changeProxySetting) => {
     });
 
     alert(`${changeProxySetting} is not installed`);
+    if (localStorage.getItem("info") == "true") {
+        showProxyWarningText(changeProxySettings.length == 0);
+    }
 });
 
 // Listener for handling server errors
@@ -105,12 +119,19 @@ ipcRenderer.on('proxy-watch', (event, response) => {
         isProxyServerRunning = true;
         isProxySettingsChanging = false;
         nextState();
-    } else if (res != "HTTP:OK" && isProxyServerRunning && currentStateIndex != 0) {
+    } else if (res != "HTTP:OK" && isProxyServerRunning && currentStateIndex != 0 && isPortFree) {
         isProxyServerRunning = false;
         currentStateIndex = 0;
         nextState();
     }
     document.getElementById('proxyWarning').innerHTML = res === "HTTP:DOWN" ? "The server from the selected country is currently unavailable." : "The device network is down. Please check your internet connection.";
+});
+
+// Listener for handling port errors
+ipcRenderer.on('port-error', (event, err) => {
+    isPortFree = false;
+    nextState();
+    alert(`${err.toString()}`);
 });
 
 // Function to show the proxy warning
@@ -282,6 +303,28 @@ ipcRenderer.on('refresh-browser-list', () => {
     addEventListener();
 });
 
+// Listener for handling refresh info text
+ipcRenderer.on('refresh-info-text', () => {
+    changeInfoText();
+});
+
+// Function to change info text
+function changeInfoText() {
+    if (localStorage.getItem("info") == "true") {
+        document.getElementById('ip-info').style = "display:block";
+        document.getElementById('info-text').style = "display:none";
+        if (currentStateIndex == 2) {
+            fetchIPInfo();
+            showProxyWarningText(changeProxySettings.length == 0);
+        }
+    } else {
+        document.getElementById('ip-info').style = "display:none";
+        document.getElementById('info-text').style = "display:block";
+        showProxyWarningText(false);
+    }
+}
+changeInfoText();
+
 // Create the browserToggles HTML containers for the browserList
 function createBrowserListItem(browserConfig) {
     return browserConfig.map((browser, id) => {
@@ -326,30 +369,60 @@ checkForUpdate();
 
 // Function to check if a new version of the app is available on GitHub
 async function checkForUpdate() {
-    try {
-        const currentVersion = await ipcRenderer.invoke("get-version");
-        const response = await fetch('https://api.github.com/repos/Alessandros-Hube/PsiphonLinuxGUI/releases/latest');
-        const data = await response.json();
-        const latestVersion = data.tag_name.replace(/^v/, '');
-
-        if (isNewerVersion(latestVersion, currentVersion)) {
-            notifyBtn.style.display = "inline";
-            bannerText.textContent = `Version ${latestVersion} of PsiphonLinuxGUI is available!`;
-        } else {
-            notifyBtn.style.display = "none";
-        }
-    } catch (err) {
-        console.log(err);
+    const result = await getGUIUpdateInfo();
+    if (result.hasUpdate) {
+        notifyBtn.style.display = "inline";
+        bannerText.textContent = `Version ${result.latestVersion} of PsiphonLinuxGUI is available!`;
+    } else {
+        notifyBtn.style.display = "none";
     }
 }
 
-// Function to check if is latest version number newer then the current version number
-function isNewerVersion(latest, current) {
-    const latestParts = latest.split('.').map(Number);
-    const currentParts = current.split('.').map(Number);
-    for (let i = 0; i < latestParts.length; i++) {
-        if ((latestParts[i] || 0) > (currentParts[i] || 0)) return true;
-        if ((latestParts[i] || 0) < (currentParts[i] || 0)) return false;
-    }
-    return false;
+// Listener for handling ip info
+ipcRenderer.on('ip-info-result', (event, { ip, country, countryCode, city }) => {
+    updateSidebarInfo(ip, country, countryCode, city);
+});
+
+// Function to get IP info
+function fetchIPInfo() {
+    ipcRenderer.send('fetch-ip-info');
 }
+
+// Set IP & Country in the sidebar
+function updateSidebarInfo(ip, country, countryCode, city) {
+    document.getElementById('current-ip').textContent = ip || '---';
+    document.getElementById('current-country').textContent = country || '---';
+    document.getElementById('current-city').textContent = city || '---';
+
+    const flagIcon = document.getElementById('flag-icon');
+
+    if (countryCode) {
+        flagIcon.className = `fi fi-${countryCode.toLowerCase()}`;
+        flagIcon.style.display = 'inline-block';
+    } else {
+        flagIcon.className = '';
+        flagIcon.style.display = 'none';
+    }
+}
+
+// Display a warning box if NO app proxy setting is active
+function showProxyWarningText(show) {
+    document.getElementById('proxy-warning-box').style.display = show ? 'block' : 'none';
+}
+
+// Modal open
+document.getElementById('btn-show-manual-instructions').addEventListener('click', () => {
+    document.getElementById('manual-proxy-modal').style.display = 'flex';
+});
+
+// Modal close
+document.getElementById('btn-close-modal').addEventListener('click', () => {
+    document.getElementById('manual-proxy-modal').style.display = 'none';
+});
+
+// Optional: Clicking the overlay closes the modal
+document.getElementById('manual-proxy-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+        e.currentTarget.style.display = 'none';
+    }
+});
