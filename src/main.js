@@ -381,7 +381,7 @@ ipcMain.on('theme-updated', () => {
 ipcMain.on('set-attention', () => {
     if (!mainWindow) return;
 
-    mainWindow.flashFrame(true);
+    mainWindow.focus(true);
 });
 
 // Handler for an invoke the version number of the app
