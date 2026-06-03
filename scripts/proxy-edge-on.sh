@@ -1,7 +1,12 @@
 #!/bin/bash
 
+CONFIG="$HOME/.config/psiphonlinuxgui/psiphon.config"
+
+HTTP_PORT=$(grep -oP '"LocalHttpProxyPort"\s*:\s*\K[0-9]+' "$CONFIG")
+SOCKS_PORT=$(grep -oP '"LocalSocksProxyPort"\s*:\s*\K[0-9]+' "$CONFIG")
+
 # Proxy settings
-PROXY_SERVER="http=localhost:8081;https=localhost:8081;socks=localhost:1081"
+PROXY_SERVER="http=localhost:$HTTP_PORT;https=localhost:$HTTP_PORT;socks=localhost:$SOCKS_PORT"
 
 # Check if Edge is installed natively (AUR version)
 if command -v microsoft-edge-stable &> /dev/null

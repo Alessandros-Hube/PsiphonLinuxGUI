@@ -22,6 +22,9 @@
             <div class="setting-sidebar-item" data-page="browser-list">
                 Edit Browser list
             </div>
+            <div class="setting-sidebar-item" data-page="locale-proxy-ports">
+                Locale Proxy-Ports
+            </div>
             <div class="setting-sidebar-item" data-page="upstream-proxy">
                 Upstream Proxy
             </div>
@@ -148,6 +151,32 @@
                 </div>
             </div>
 
+            <!-- Locale Proxy-Ports PAGE -->
+            <div class="page" id="locale-proxy-ports">
+                <h3>Locale Proxy-Ports</h3>
+                <p>If the default proxy ports are already in use by another application on your system, you can change them here. 
+                    Set a custom port for HTTP/HTTPS and SOCKS connections to avoid conflicts.
+                </p>
+                <div class="hint-box" id="hint-locale-proxy-ports" style="margin: 20px 0;">
+                    To change the locale proxy-proxy, please turn off the proxy server.
+                </div>
+                <div id="locale-proxy-ports-fields">
+                    <div class="locale-proxy-ports-row">
+                        <label>HTTP/HTTPS:</label>
+                        <input type="number" id="locale-proxy-port-http" value="8081" min="1" max="65535"
+                            size="5" />
+                    </div>
+                    <div class="locale-proxy-ports-row">
+                        <label>SOCKS:</label>
+                        <input type="number" id="locale-proxy-port-socks" value="1081" min="1" max="65535"
+                            size="5" />
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="locale-proxy-ports-clear" class="clear-btn">Reset</button>
+                    <button id="locale-proxy-ports-apply" class="apply-btn" disabled>Apply</button>
+                </div>
+            </div>
             <!-- Upstream Proxy PAGE -->
             <div class="page" id="upstream-proxy">
                 <h3>Upstream Proxy</h3>

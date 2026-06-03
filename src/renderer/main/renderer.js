@@ -51,7 +51,9 @@ function nextState() {
             if (createPsiphonConfig(country, upstreamProxyUrl) && isBackendInit) {
                 isPortFree = true;
                 updateSidebarInfo("Loading...", "Loading...", null, "Loading...");
-                ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server
+                let reCheckPort = localStorage.getItem("reCheckPort") == "true" ? true : false;
+                ipcRenderer.send('start-vpn-proxy-server', reCheckPort); // Start the VPN/proxy server
+                localStorage.setItem("reCheckPort", "false");
 
                 isProxySettingsChanging = true;
 
@@ -311,6 +313,7 @@ ipcRenderer.on('refresh-browser-list', () => {
 // Listener for handling refresh info text
 ipcRenderer.on('refresh-info-text', () => {
     changeInfoText();
+    updatePortText();
 });
 
 // Function to change info text
@@ -383,6 +386,16 @@ async function checkForUpdate() {
     }
 }
 
+function updatePortText() {
+    document.querySelectorAll('.http').forEach(el=>{
+        el.textContent = localStorage.getItem("locale-proxy-port-http") ? localStorage.getItem("locale-proxy-port-http") : 8081;
+    });
+    document.querySelectorAll('.socks').forEach(el=>{
+        el.textContent = localStorage.getItem("locale-proxy-port-socks") ? localStorage.getItem("locale-proxy-port-socks") : 8081;
+    });
+}
+updatePortText();
+
 // Listener for handling ip info
 ipcRenderer.on('ip-info-result', (event, { ip, country, countryCode, city }) => {
     updateSidebarInfo(ip, country, countryCode, city);
@@ -390,7 +403,8 @@ ipcRenderer.on('ip-info-result', (event, { ip, country, countryCode, city }) => 
 
 // Function to get IP info
 function fetchIPInfo() {
-    ipcRenderer.send('fetch-ip-info');
+    const http = localStorage.getItem("locale-proxy-port-http") ? localStorage.getItem("locale-proxy-port-http") : 8081;
+    ipcRenderer.send('fetch-ip-info', parseInt(http));
 }
 
 // Set IP & Country in the sidebar

@@ -438,6 +438,14 @@ input:checked+.slider:before {
     line-height: 1.4;
 }
 
+.locale-proxy-ports-row{
+    display: grid;
+    grid-template-columns: 110px 1fr; 
+    align-items: center; 
+    gap: 10px 12px;
+    margin: 15px;
+}
+
 .upstream-proxy-row{
     display: grid;
     grid-template-columns: 110px 1fr; 
