@@ -41,9 +41,14 @@ function nextState() {
                 localStorage.setItem("latestCountry", country);
             }
 
+            let upstreamProxyUrl = null;
+            if (localStorage.getItem("upstream-proxy-enabled") == "true") {
+                upstreamProxyUrl = localStorage.getItem("upstreamProxyUrl") != "null" ? localStorage.getItem("upstreamProxyUrl") : null;
+            }
+
             // Create config based on the selected country and inti the backend
             const isBackendInit = initBackend();
-            if (createPsiphonConfig(country) && isBackendInit) {
+            if (createPsiphonConfig(country, upstreamProxyUrl) && isBackendInit) {
                 isPortFree = true;
                 updateSidebarInfo("Loading...", "Loading...", null, "Loading...");
                 ipcRenderer.send('start-vpn-proxy-server'); // Start the VPN/proxy server

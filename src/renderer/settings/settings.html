@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
     <link rel="stylesheet" href="settings.css" />
     <title>Setting</title>
 </head>
@@ -20,6 +21,9 @@
             </div>
             <div class="setting-sidebar-item" data-page="browser-list">
                 Edit Browser list
+            </div>
+            <div class="setting-sidebar-item" data-page="upstream-proxy">
+                Upstream Proxy
             </div>
             <div class="setting-sidebar-item" data-page="about-page">
                 About Page
@@ -70,7 +74,7 @@
 
             <!-- EDITED BROWSERSLIST PAGE -->
             <div class="page" id="browser-list">
-                <div class="hint-box" id="hint1">
+                <div class="hint-box" id="hint-browser-list">
                     To change the browser list, please turn off the proxy server.
                 </div>
                 <div class="settings-actions">
@@ -144,6 +148,59 @@
                 </div>
             </div>
 
+            <!-- Upstream Proxy PAGE -->
+            <div class="page" id="upstream-proxy">
+                <h3>Upstream Proxy</h3>
+                <p>If a proxy is already configured on your computer, the application will use it by default when setting up a tunnel.
+                    You can override this behavior by specifying a proxy to use or by setting the application not to use such an upstream proxy.
+                </p>
+                <br>
+                <p>
+                    Upstream proxies are sometimes required by schools, universities, or businesses.
+                    If your network provider has provided you with upstream proxy settings, you may need to configure
+                    them manually here to establish a connection.
+                </p>
+                <div class="hint-box" id="hint-upstream-proxy" style="margin: 20px 0;">
+                    To change the upstream proxy, please turn off the proxy server.
+                </div>
+                <div style="margin: 20px 0;">
+                    <label>
+                        <input type="checkbox" id="upstream-proxy-enabled" />
+                        Use upstream proxy
+                    </label>
+                </div>
+                <div id="upstream-proxy-fields" style="display:none;">
+                    <div class="upstream-proxy-row">
+                        <label>Hostname:</label>
+                        <input type="text" id="upstream-proxy-host" placeholder="e.g. 192.168.1.1" />
+                    </div>
+                    <div class="upstream-proxy-row">
+                        <label>Port:</label>
+                        <input type="number" id="upstream-proxy-port" placeholder="e.g. 8080" min="1" max="65535"
+                            size="5" />
+                    </div>
+                    <div class="upstream-proxy-row">
+                        <label>Username:</label>
+                        <input type="text" id="upstream-proxy-user" placeholder="Optional" />
+                    </div>
+                    <div class="upstream-proxy-row">
+                        <label>Password:</label>
+                        <div style="display:flex;">
+                            <input style="width: stretch;" type="password" id="upstream-proxy-pass"
+                                placeholder="Optional" />
+                            <button class="toggleBtn" id="toggleBtn" onclick="togglePassword()"
+                                aria-label="Show password">
+                                <i class="ti ti-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button id="upstream-proxy-clear" class="clear-btn">Clear</button>
+                        <button id="upstream-proxy-apply" class="apply-btn" disabled>Apply</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="page" id="about-page">
                 <div class="about-container">
 
@@ -153,7 +210,7 @@
                             <p class="tagline">Unofficial Psiphon Frontend for Linux</p>
                         </div>
                     </div>
-                    <div class="hint-box" id="hint2">
+                    <div class="hint-box" id="hint-about">
                         To update, please turn off the proxy server.
                     </div>
                     <div class="version-grid">
