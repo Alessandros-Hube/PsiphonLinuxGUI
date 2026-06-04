@@ -189,15 +189,17 @@ function executeProxyWatchScript(event) {
         label: 'Proxy Watcher',
         event,
         onStdOut: (msg, event) => {
-            if (event && msg.includes('HTTP:OK') && msg.includes('DEVICE:OK')) {
-                // Send a message back to the renderer process if the process started
-                event.reply('proxy-watch', "HTTP:OK");
-            } else if (event && msg.includes('HTTP:DOWN') && msg.includes('DEVICE:OK')) {
-                // Send a message back to the renderer process if the process stopped
-                event.reply('proxy-watch', "HTTP:DOWN");
-            } else if (event && msg.includes('DEVICE:DOWN')) {
-                // Send a message back to the renderer process if the device network is down
-                event.reply('proxy-watch', "DEVICE:DOWN");
+            if (isPortFree) {
+                if (event && msg.includes('HTTP:OK') && msg.includes('DEVICE:OK')) {
+                    // Send a message back to the renderer process if the process started
+                    event.reply('proxy-watch', "HTTP:OK");
+                } else if (event && msg.includes('HTTP:DOWN') && msg.includes('DEVICE:OK')) {
+                    // Send a message back to the renderer process if the process stopped
+                    event.reply('proxy-watch', "HTTP:DOWN");
+                } else if (event && msg.includes('DEVICE:DOWN')) {
+                    // Send a message back to the renderer process if the device network is down
+                    event.reply('proxy-watch', "DEVICE:DOWN");
+                }
             }
         }
     });
@@ -212,6 +214,7 @@ function executeCheckPortScript(event) {
         event,
         onStdOut: (msg, event) => {
             if (event && msg.toString().includes("to connect to proxy server is occupied")) {
+                isPortFree = false;
                 event.reply('port-error', msg);
             }
         }

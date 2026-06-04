@@ -297,11 +297,21 @@ if (localStorage.getItem("currentStateIndex") != 0) {
 
 // Function to initialize the local proxy port page
 function initLocalProxyPortPage() {
-    document.getElementById('locale-proxy-port-http').value = localStorage.getItem("locale-proxy-port-http") ? localStorage.getItem("locale-proxy-port-http") : 8081;
-    document.getElementById('locale-proxy-port-socks').value = localStorage.getItem("locale-proxy-port-socks") ? localStorage.getItem("locale-proxy-port-socks") : 1081;
+    if (localStorage.getItem("locale-proxy-port-http") == null) {
+        localStorage.setItem("locale-proxy-port-http", 8081)
+    }
+    if (localStorage.getItem("locale-proxy-port-socks") == null) {
+        localStorage.setItem("locale-proxy-port-socks", 1081)
+    } 
+    document.getElementById('locale-proxy-port-http').value = localStorage.getItem("locale-proxy-port-http");
+    document.getElementById('locale-proxy-port-socks').value = localStorage.getItem("locale-proxy-port-socks");
 
-    if (localStorage.getItem("locale-proxy-port-http") == 8081 && localStorage.getItem("locale-proxy-port-socks") == 1081) {
-        document.getElementById('locale-proxy-ports-clear').disabled = true;
+    if (localStorage.getItem("currentStateIndex") == 0) {
+        if (localStorage.getItem("locale-proxy-port-http") == "8081" && localStorage.getItem("locale-proxy-port-socks") == "1081") {
+            document.getElementById('locale-proxy-ports-clear').disabled = true;
+        } else {
+            document.getElementById('locale-proxy-ports-clear').disabled = false;
+        }
     }
 }
 initLocalProxyPortPage();
@@ -333,11 +343,13 @@ document.getElementById('locale-proxy-ports-apply').addEventListener('click', fu
 
 // Function to validate locale proxy ports form
 function validateLocalPortForm() {
-    const httpValid = isFilled(document.getElementById('locale-proxy-port-http'));
-    const socksValid = isFilled(document.getElementById('locale-proxy-port-socks'));
+    const http = document.getElementById('locale-proxy-port-http');
+    const socks = document.getElementById('locale-proxy-port-socks');
+    const httpValid = isFilled(http);
+    const socksValid = isFilled(socks);
 
-    document.getElementById('locale-proxy-ports-apply').disabled = !(httpValid && socksValid);
-    document.getElementById('locale-proxy-ports-clear').disabled = false;
+    document.getElementById('locale-proxy-ports-apply').disabled = localStorage.getItem("locale-proxy-port-http") == http.value.trim() && localStorage.getItem("locale-proxy-port-socks") == socks.value.trim() ? true : !(httpValid && socksValid);
+    document.getElementById('locale-proxy-ports-clear').disabled = localStorage.getItem("locale-proxy-port-http") == http.value.trim() && localStorage.getItem("locale-proxy-port-socks") == socks.value.trim() ? true : false;
 }
 document.getElementById('locale-proxy-ports-fields').querySelectorAll('input').forEach(input => {
     input.addEventListener('input', validateLocalPortForm);
@@ -361,7 +373,10 @@ function initUpstreamProxyPage() {
     document.getElementById("upstream-proxy-pass").value = localStorage.getItem("pass");
     
     if (localStorage.getItem("currentStateIndex") == 0) {
-        if (localStorage.getItem("host") == "" && localStorage.getItem("port") == "" && localStorage.getItem("user") == "" && localStorage.getItem("pass") == "") {
+        if ((localStorage.getItem("host") == null || localStorage.getItem("host") == "") && 
+            (localStorage.getItem("port") == null || localStorage.getItem("port") == "") && 
+            (localStorage.getItem("user") == null || localStorage.getItem("user") == "") &&
+            (localStorage.getItem("pass") == null || localStorage.getItem("pass") == "")) {
             document.getElementById('upstream-proxy-clear').disabled = true;
         } else {
             document.getElementById('upstream-proxy-clear').disabled = false;

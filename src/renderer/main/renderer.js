@@ -137,6 +137,7 @@ ipcRenderer.on('proxy-watch', (event, response) => {
 // Listener for handling port errors
 ipcRenderer.on('port-error', (event, err) => {
     isPortFree = false;
+    currentStateIndex = 2;
     nextState();
     alert(`${err.toString()}`);
 });
