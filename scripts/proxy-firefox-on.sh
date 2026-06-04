@@ -1,18 +1,23 @@
 #!/bin/bash
 
+CONFIG="$HOME/.config/psiphonlinuxgui/psiphon.config"
+
+HTTP_PORT=$(grep -oP '"LocalHttpProxyPort"\s*:\s*\K[0-9]+' "$CONFIG")
+SOCKS_PORT=$(grep -oP '"LocalSocksProxyPort"\s*:\s*\K[0-9]+' "$CONFIG")
+
 # Function for writing the user.js file
 write_user_js() {
     local profile_dir=$1
     cat <<EOL > "$profile_dir/user.js"
 user_pref("network.proxy.type", 1);
 user_pref("network.proxy.http", "localhost");
-user_pref("network.proxy.http_port", 8081);
+user_pref("network.proxy.http_port", $HTTP_PORT);
 user_pref("network.proxy.ssl", "localhost");
-user_pref("network.proxy.ssl_port", 8081);
+user_pref("network.proxy.ssl_port", $HTTP_PORT);
 user_pref("network.proxy.ftp", "localhost");
-user_pref("network.proxy.ftp_port", 8081);
+user_pref("network.proxy.ftp_port", $HTTP_PORT);
 user_pref("network.proxy.socks", "localhost");
-user_pref("network.proxy.socks_port", 1081);
+user_pref("network.proxy.socks_port", $SOCKS_PORT);
 user_pref("network.proxy.socks_version", 5);
 user_pref("network.proxy.no_proxies_on", "localhost, 127.0.0.1");
 EOL
