@@ -189,15 +189,17 @@ function executeProxyWatchScript(event) {
         label: 'Proxy Watcher',
         event,
         onStdOut: (msg, event) => {
-            if (event && msg.includes('HTTP:OK') && msg.includes('DEVICE:OK')) {
-                // Send a message back to the renderer process if the process started
-                event.reply('proxy-watch', "HTTP:OK");
-            } else if (event && msg.includes('HTTP:DOWN') && msg.includes('DEVICE:OK')) {
-                // Send a message back to the renderer process if the process stopped
-                event.reply('proxy-watch', "HTTP:DOWN");
-            } else if (event && msg.includes('DEVICE:DOWN')) {
-                // Send a message back to the renderer process if the device network is down
-                event.reply('proxy-watch', "DEVICE:DOWN");
+            if (isPortFree) {
+                if (event && msg.includes('HTTP:OK') && msg.includes('DEVICE:OK')) {
+                    // Send a message back to the renderer process if the process started
+                    event.reply('proxy-watch', "HTTP:OK");
+                } else if (event && msg.includes('HTTP:DOWN') && msg.includes('DEVICE:OK')) {
+                    // Send a message back to the renderer process if the process stopped
+                    event.reply('proxy-watch', "HTTP:DOWN");
+                } else if (event && msg.includes('DEVICE:DOWN')) {
+                    // Send a message back to the renderer process if the device network is down
+                    event.reply('proxy-watch', "DEVICE:DOWN");
+                }
             }
         }
     });
@@ -212,6 +214,7 @@ function executeCheckPortScript(event) {
         event,
         onStdOut: (msg, event) => {
             if (event && msg.toString().includes("to connect to proxy server is occupied")) {
+                isPortFree = false;
                 event.reply('port-error', msg);
             }
         }
@@ -219,10 +222,10 @@ function executeCheckPortScript(event) {
 }
 
 // Function to get IP info via curl
-function fetchIPInfoViaCurl(event) {
+function fetchIPInfoViaCurl(event, http) {
     runProcess({
         command: 'bash',
-        args: ['-c', 'curl -s --max-time 10 --proxy http://127.0.0.1:8081 http://ip-api.com/json/'],
+        args: ['-c', `curl -s --max-time 10 --proxy http://127.0.0.1:${http} http://ip-api.com/json/`],
         label: 'Fetch IP Info',
         event,
         onStdOut: (msg, event) => {
@@ -298,13 +301,13 @@ ipcMain.on('open-settings-page', () => {
 });
 
 // Listener for getting IP info 
-ipcMain.on('fetch-ip-info', (event) => {
-    fetchIPInfoViaCurl(event);
+ipcMain.on('fetch-ip-info', (event, http) => {
+    fetchIPInfoViaCurl(event, http);
 });
 
 // Listener for starting the VPN/proxy server
-ipcMain.on('start-vpn-proxy-server', (event) => {
-    if (!isPortFree) {
+ipcMain.on('start-vpn-proxy-server', (event, reCheckPort) => {
+    if (!isPortFree || reCheckPort) {
         // Start the check port script to check the connection port
         executeCheckPortScript(event);
     }

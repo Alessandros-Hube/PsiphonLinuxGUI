@@ -1,27 +1,29 @@
 #!/usr/bin/env bash
 
-PORT=8081
+CONFIG="$HOME/.config/psiphonlinuxgui/psiphon.config"
+
+HTTP_PORT=$(grep -oP '"LocalHttpProxyPort"\s*:\s*\K[0-9]+' "$CONFIG")
 
 check_port() {
     local pid process result
 
-    # Methode 1: lsof
-    pid=$(lsof -ti tcp:$PORT 2>/dev/null | head -1)
+    # Method 1: lsof
+    pid=$(lsof -ti tcp:$HTTP_PORT 2>/dev/null | head -1)
 
     if [ -n "$pid" ]; then
         process=$(ps -p "$pid" -o comm= 2>/dev/null)
-        echo "Port $PORT to connect to proxy server is occupied by process: $process (PID: $pid)"
+        echo "Port $HTTP_PORT to connect to proxy server is occupied by process: $process (PID: $pid)"
         return
     fi
 
-    # Methode 2: ss als Fallback
-    result=$(ss -tlnp "sport = :$PORT" 2>/dev/null | grep ":$PORT")
+    # Method 2: ss as a Fallback
+    result=$(ss -tlnp "sport = :$HTTP_PORT" 2>/dev/null | grep ":$HTTP_PORT")
 
     if [ -n "$result" ]; then
-        echo "Port $PORT to connect to proxy server is occupied"
+        echo "Port $HTTP_PORT to connect to proxy server is occupied"
         exit 1
     else
-        echo "Port $PORT is free"
+        echo "Port $HTTP_PORT is free"
         exit 0
     fi
 }

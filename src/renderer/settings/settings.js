@@ -2,6 +2,7 @@ const { ipcRenderer } = require('electron');
 const {
     checkBackendUpdate,
     createBrowserList,
+    createPsiphonConfig,
     getAppVersion,
     getDefaultBrowserConfig,
     getConfig,
@@ -269,7 +270,7 @@ modal.querySelectorAll('input').forEach(input => {
 
 // Disable settings if not in STOPPED state
 if (localStorage.getItem("currentStateIndex") != 0) {
-    document.getElementById("hint1").style.display = 'block';
+    document.getElementById("hint-browser-list").style.display = 'block';
     document.querySelector(".settings-actions").style = 'margin-top: 10px';
     document.querySelector(".setting-browser-list").style.height = "450px";
     document.querySelector(".new-btn").disabled = true;
@@ -277,7 +278,189 @@ if (localStorage.getItem("currentStateIndex") != 0) {
     document.querySelector(".save-btn").disabled = true;
     document.querySelectorAll(".remove-btn").forEach(btn => btn.disabled = true);
     document.querySelectorAll(".drag-handle").forEach(handle => handle.style.display = "none");
+
+    document.getElementById("hint-locale-proxy-ports").style.display = 'block';
+    document.getElementById('locale-proxy-port-http').disabled = true;
+    document.getElementById('locale-proxy-port-socks').disabled = true;
+    document.getElementById('locale-proxy-ports-apply').disabled = true;
+    document.getElementById('locale-proxy-ports-clear').disabled = true;
+
+    document.getElementById("hint-upstream-proxy").style.display = 'block';
+    document.getElementById('upstream-proxy-enabled').disabled = true;
+    document.getElementById('upstream-proxy-host').disabled = true;
+    document.getElementById('upstream-proxy-port').disabled = true;
+    document.getElementById('upstream-proxy-user').disabled = true;
+    document.getElementById('upstream-proxy-pass').disabled = true;
+    document.getElementById('toggleBtn').disabled = true;
+    document.getElementById('upstream-proxy-clear').disabled = true;
 }
+
+// Function to initialize the local proxy port page
+function initLocalProxyPortPage() {
+    if (localStorage.getItem("locale-proxy-port-http") == null) {
+        localStorage.setItem("locale-proxy-port-http", 8081)
+    }
+    if (localStorage.getItem("locale-proxy-port-socks") == null) {
+        localStorage.setItem("locale-proxy-port-socks", 1081)
+    } 
+    document.getElementById('locale-proxy-port-http').value = localStorage.getItem("locale-proxy-port-http");
+    document.getElementById('locale-proxy-port-socks').value = localStorage.getItem("locale-proxy-port-socks");
+
+    if (localStorage.getItem("currentStateIndex") == 0) {
+        if (localStorage.getItem("locale-proxy-port-http") == "8081" && localStorage.getItem("locale-proxy-port-socks") == "1081") {
+            document.getElementById('locale-proxy-ports-clear').disabled = true;
+        } else {
+            document.getElementById('locale-proxy-ports-clear').disabled = false;
+        }
+    }
+}
+initLocalProxyPortPage();
+
+// Function to change locale port
+function changeLocalePorts() {
+    const http = document.getElementById('locale-proxy-port-http').value.trim();
+    const socks = document.getElementById('locale-proxy-port-socks').value.trim();
+
+    const psiphonConfig = getConfig("psiphon.config");
+
+    if (psiphonConfig) {
+        psiphonConfig.LocalHttpProxyPort = parseInt(http);
+        psiphonConfig.LocalSocksProxyPort = parseInt(socks);
+
+        writeFileSafe(getConfigPath('psiphon.config'), JSON.stringify(psiphonConfig, null, 2), 'utf-8');
+        
+        localStorage.setItem("locale-proxy-port-http", http);
+        localStorage.setItem("locale-proxy-port-socks", socks);
+
+        localStorage.setItem("reCheckPort", "true");
+        ipcRenderer.send('info-text-change');
+    }
+}
+document.getElementById('locale-proxy-ports-apply').addEventListener('click', function () {
+    changeLocalePorts();
+    document.getElementById('locale-proxy-ports-apply').disabled = true;
+});
+
+// Function to validate locale proxy ports form
+function validateLocalPortForm() {
+    const http = document.getElementById('locale-proxy-port-http');
+    const socks = document.getElementById('locale-proxy-port-socks');
+    const httpValid = isFilled(http);
+    const socksValid = isFilled(socks);
+
+    document.getElementById('locale-proxy-ports-apply').disabled = localStorage.getItem("locale-proxy-port-http") == http.value.trim() && localStorage.getItem("locale-proxy-port-socks") == socks.value.trim() ? true : !(httpValid && socksValid);
+    document.getElementById('locale-proxy-ports-clear').disabled = localStorage.getItem("locale-proxy-port-http") == http.value.trim() && localStorage.getItem("locale-proxy-port-socks") == socks.value.trim() ? true : false;
+}
+document.getElementById('locale-proxy-ports-fields').querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', validateLocalPortForm);
+});
+
+document.getElementById('locale-proxy-ports-clear').addEventListener('click', function () {
+    document.getElementById('locale-proxy-port-http').value = 8081;
+    document.getElementById('locale-proxy-port-socks').value = 1081;
+    changeLocalePorts();
+    document.getElementById('locale-proxy-ports-apply').disabled = true;
+    document.getElementById('locale-proxy-ports-clear').disabled = true;
+});
+
+// Function to initialize the upstream proxy page
+function initUpstreamProxyPage() {
+    document.getElementById('upstream-proxy-enabled').checked = localStorage.getItem("upstream-proxy-enabled") == "true" ? true : false;
+    document.getElementById('upstream-proxy-fields').style.display = localStorage.getItem("upstream-proxy-enabled") == "true" ? 'block' : 'none';
+    document.getElementById("upstream-proxy-host").value = localStorage.getItem("host");
+    document.getElementById("upstream-proxy-port").value = localStorage.getItem("port");
+    document.getElementById("upstream-proxy-user").value = localStorage.getItem("user");
+    document.getElementById("upstream-proxy-pass").value = localStorage.getItem("pass");
+    
+    if (localStorage.getItem("currentStateIndex") == 0) {
+        if ((localStorage.getItem("host") == null || localStorage.getItem("host") == "") && 
+            (localStorage.getItem("port") == null || localStorage.getItem("port") == "") && 
+            (localStorage.getItem("user") == null || localStorage.getItem("user") == "") &&
+            (localStorage.getItem("pass") == null || localStorage.getItem("pass") == "")) {
+            document.getElementById('upstream-proxy-clear').disabled = true;
+        } else {
+            document.getElementById('upstream-proxy-clear').disabled = false;
+        }
+    }
+}
+initUpstreamProxyPage();
+
+// Toggle visibility
+document.getElementById('upstream-proxy-enabled').addEventListener('change', function () {
+    document.getElementById('upstream-proxy-fields').style.display = this.checked ? 'block' : 'none';
+    localStorage.setItem("upstream-proxy-enabled", this.checked);
+});
+
+// Function to toggle password
+function togglePassword() {
+    var field = document.getElementById("upstream-proxy-pass");
+    var icon = document.getElementById("toggleIcon");
+    var btn = document.getElementById("toggleBtn");
+    
+    if (field.type === "password") {
+        field.type = "text";
+        icon.classList.replace("ti-eye", "ti-eye-off");
+        btn.setAttribute("aria-label", "Hide password");
+    } else {
+        field.type = "password";
+        icon.classList.replace("ti-eye-off", "ti-eye");
+        btn.setAttribute("aria-label", "Show password");
+    }
+}
+
+// Function to set upstream proxy url
+function setUpstreamProxyUrl() {    
+    const host = document.getElementById('upstream-proxy-host').value.trim();
+    const port = document.getElementById('upstream-proxy-port').value.trim();
+    const user = document.getElementById('upstream-proxy-user').value.trim();
+    const pass = document.getElementById('upstream-proxy-pass').value.trim();
+
+    localStorage.setItem("host", host);
+    localStorage.setItem("port", port);
+    localStorage.setItem("user", user);
+    localStorage.setItem("pass", pass);
+
+    if (host && port) {
+        if (user) {
+            const encodedUser = encodeURIComponent(user);
+            const encodedPass = encodeURIComponent(pass);
+            localStorage.setItem("upstreamProxyUrl", `http://${encodedUser}:${encodedPass}@${host}:${port}`);
+        } else {
+            localStorage.setItem("upstreamProxyUrl", `http://${host}:${port}`);
+        }
+    } else {
+        localStorage.setItem("upstreamProxyUrl", "null");
+        createPsiphonConfig("", null);
+    }
+
+    document.getElementById('upstream-proxy-apply').disabled = true;
+}
+document.getElementById('upstream-proxy-apply').addEventListener('click', setUpstreamProxyUrl);
+
+// Function to validate upstream proxy form
+function validateUpstreamProxyForm() {
+    const hostValid = isFilled(document.getElementById('upstream-proxy-host'));
+    const portValid = isFilled(document.getElementById('upstream-proxy-port'));
+
+    document.getElementById('upstream-proxy-apply').disabled = !(hostValid && portValid);
+    document.getElementById('upstream-proxy-clear').disabled = false;
+}
+document.getElementById('upstream-proxy-fields').querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', validateUpstreamProxyForm);
+});
+
+
+document.getElementById('upstream-proxy-clear').addEventListener('click', function () {
+    localStorage.setItem("host", "");
+    localStorage.setItem("port", "");
+    localStorage.setItem("user", "");
+    localStorage.setItem("pass", "");
+    localStorage.setItem("upstreamProxyUrl", "null");
+    createPsiphonConfig("", null);
+    initUpstreamProxyPage();
+    document.getElementById('upstream-proxy-apply').disabled = true;
+    document.getElementById('upstream-proxy-clear').disabled = true;
+});
 
 // Function to set status badge
 function setBadge(id, state) {
@@ -320,7 +503,7 @@ async function checkForUpdateGUI() {
 
         if (result.hasUpdate) {
             if (localStorage.getItem("currentStateIndex") != 0) {
-                document.getElementById("hint2").style.display = 'block';
+                document.getElementById("hint-about").style.display = 'block';
             }
             setBadge('gui-status-badge', 'update-available');
             document.getElementById('gui-update-btn').disabled = localStorage.getItem("currentStateIndex") != 0;
@@ -343,7 +526,7 @@ async function checkForUpdateBackend() {
     setBadge('backend-status-badge', 'checking');
 
     try {
-        // Lokal gespeicherte Version anzeigen
+        // View locally saved version
         const local = getConfig('backendVersion.config');
         if (!local) throw new Error('no result');
 
@@ -353,7 +536,7 @@ async function checkForUpdateBackend() {
             document.getElementById('backend-current').textContent = 'unknown';
         }
 
-        // Remote prüfen
+        // Remote check
         const result = await checkBackendUpdate();
         if (!result) throw new Error('no result');
 
@@ -361,7 +544,7 @@ async function checkForUpdateBackend() {
 
         if (result.hasUpdate) {
             if (localStorage.getItem("currentStateIndex") != 0) {
-                document.getElementById("hint2").style.display = 'block';
+                document.getElementById("hint-about").style.display = 'block';
             }
             setBadge('backend-status-badge', 'update-available');
             document.getElementById('backend-update-btn').disabled = localStorage.getItem("currentStateIndex") != 0;

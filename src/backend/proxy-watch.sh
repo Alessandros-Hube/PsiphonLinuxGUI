@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
-HTTP_PROXY="127.0.0.1:8081"
 INTERVAL=3   # seconds
 
 check_http() {
+    CONFIG="$HOME/.config/psiphonlinuxgui/psiphon.config"
+    HTTP_PORT=$(grep -oP '"LocalHttpProxyPort"\s*:\s*\K[0-9]+' "$CONFIG")
+    HTTP_PROXY="127.0.0.1:$HTTP_PORT"
+    
     curl -x "http://$HTTP_PROXY" \
         --connect-timeout 3 \
         -k \
